@@ -19,9 +19,9 @@ jobs:
     runs-on: windows-2022
     timeout-minutes: 60
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
 
@@ -40,7 +40,23 @@ jobs:
           python -m playwright install chromium
 
       - name: Run the automated tests on Windows
-        run: python -m pytest -v
+        id: tests
+        continue-on-error: true      # keep building so one run also checks the .exe and installer
+        shell: pwsh
+        run: |
+          python -m pytest -v --tb=short -rfE 2>&1 | Tee-Object -FilePath pytest-output.txt
+          $code = $LASTEXITCODE
+          if ($code -ne 0) {
+            # Publish the failure details as an annotation (visible on the run page and through the API).
+            $lines = @(Get-Content pytest-output.txt)
+            $hit = $lines | Select-String -Pattern "= (FAILURES|ERRORS) =" | Select-Object -First 1
+            $text = if ($hit) { $lines[($hit.LineNumber - 1)..($lines.Count - 1)] } else { $lines | Select-Object -Last 150 }
+            $msg = $text -join "`n"
+            if ($msg.Length -gt 60000) { $msg = $msg.Substring(0, 60000) }
+            $msg = $msg.Replace('%', '%25').Replace("`r", '%0D').Replace("`n", '%0A')
+            Write-Host "::error title=Test failures::$msg"
+            exit $code
+          }
 
       - name: Build the program with PyInstaller
         run: python -m PyInstaller --noconfirm --clean BiblePresenter.spec
@@ -61,8 +77,13 @@ jobs:
           }
           if (-not $p.HasExited) { Stop-Process -Id $p.Id -Force }
           $log = Join-Path $env:BIBLE_PRESENTER_HOME "bible-presenter.log"
-          if (Test-Path $log) { Get-Content $log -Tail 40 }
-          if (-not $ok) { throw "BiblePresenter.exe did not start its presentation server." }
+          $tail = if (Test-Path $log) { (Get-Content $log -Tail 60) -join "`n" } else { "(no log file)" }
+          Write-Host $tail
+          if (-not $ok) {
+            $msg = ("exited=" + $p.HasExited + "`n" + $tail).Replace('%', '%25').Replace("`r", '%0D').Replace("`n", '%0A')
+            Write-Host "::error title=BiblePresenter.exe did not start::$msg"
+            throw "BiblePresenter.exe did not start its presentation server."
+          }
           Write-Host "BiblePresenter.exe started and served the OBS page."
 
       - name: Install Inno Setup
@@ -97,8 +118,12 @@ jobs:
           name: BiblePresenter-Setup-${{ env.APP_VERSION }}
           path: dist/BiblePresenter-Setup-*.exe
 
+      - name: Stop here if any test failed
+        if: steps.tests.outcome == 'failure'
+        run: exit 1
+
       - name: Publish a release (tags only)
-        if: github.ref_type == 'tag'
+        if: github.ref_type == 'tag' && steps.tests.outcome == 'success'
         uses: softprops/action-gh-release@v2
         with:
           files: dist/BiblePresenter-Setup-*.exe
