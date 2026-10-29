@@ -1,10 +1,10 @@
-"""Drives the real operator window (offscreen) to check the preview / live workflow."""
+"""Drives the real operator window (offscreen) to check the search / preview / live workflow."""
 import time
 
 import pytest
 
 pytest.importorskip("PySide6.QtWidgets")
-from PySide6.QtCore import Qt  # noqa: E402
+from PySide6.QtCore import Qt, QUrl  # noqa: E402
 from PySide6.QtWidgets import QApplication  # noqa: E402
 
 
@@ -22,85 +22,136 @@ def pump(app, ms=200):
         time.sleep(0.01)
 
 
-@pytest.fixture
-def window(qapp, range_core, monkeypatch):
-    mini_core = range_core
+def _window(qapp, core, monkeypatch):
     from app.ui import main_window
     monkeypatch.setattr(main_window.MainWindow, "_startup", lambda self: None)   # no server / dialogs
-    w = main_window.MainWindow(mini_core)
+    w = main_window.MainWindow(core)
     w.show()
     pump(qapp)
+    return w
+
+
+@pytest.fixture
+def window(qapp, range_core, monkeypatch):
+    w = _window(qapp, range_core, monkeypatch)
     yield w
     w.close()
     pump(qapp)
 
 
-def test_reference_lookup_updates_preview_but_not_live(qapp, window):
+@pytest.fixture
+def verse_window(qapp, mini_core, monkeypatch):
+    """Default settings: one verse at a time."""
+    w = _window(qapp, mini_core, monkeypatch)
+    yield w
+    w.close()
+    pump(qapp)
+
+
+def search(w, text):
+    w.search.setText(text)
+    w.run_search()
+
+
+def test_reference_search_updates_preview_but_not_live(qapp, window):
     core = window.core
-    window.nav.ref_edit.setText("Jean 3:16-18")
-    window.nav.lookup_reference()
-    assert window.sel_label.text() == "John 3:16–18  ·  Jean 3:16-18"
+    search(window, "Jean 3:16-18")
+    assert "John 3:16–18" in window.sel_label.text() and "Jean 3:16-18" in window.sel_label.text()
     assert core.controller.output_payload()["mode"] == "clear"         # nothing live yet
     window.go_live()
     assert core.controller.live_passage == window.selected
-    window.nav.ref_edit.setText("Acts 8:36-38")
-    window.nav.lookup_reference()
+    search(window, "Acts 8:36-38")
     pump(qapp)
     assert core.controller.output_payload()["slide"]["reference"]["en"] == "John 3:16–18"   # unchanged
-    assert "LIVE" in window.live_tag.text() and window.live_ref.text() == "John 3:16–18"
-    assert "not in TWEB" in window.text_view.toPlainText()           # missing-verse indicator in centre panel
+    assert window.live_tag.text() == "LIVE" and "John 3:16–18" in window.live_ref.text()
+    assert "not in TWEB" in window.text_view.toPlainText()           # missing-verse indicator
 
 
 def test_invalid_reference_shows_message(qapp, window):
-    window.nav.ref_edit.setText("John 30:1")
-    window.nav.lookup_reference()
-    assert window.nav.ref_error.isVisibleTo(window)
-    assert "chapter 30 does not exist" in window.nav.ref_error.text()
+    search(window, "John 30:1")
+    assert window.error_label.isVisibleTo(window)
+    assert "chapter 30 does not exist" in window.error_label.text()
     assert window.selected is None
 
 
-def test_black_and_restore_buttons(qapp, window):
-    window.nav.ref_edit.setText("John 3:16")
-    window.nav.lookup_reference()
+def test_words_search_lists_results_in_both_languages(qapp, window):
+    search(window, "eternelle")                                       # French word, accents ignored
+    assert window.stack.currentIndex() == 1 and window.results.count() == 1
+    window._result_chosen(window.results.item(0))
+    assert window.selected.reference("fr") == "Jean 3:16"
+    assert window.stack.currentIndex() == 0
+    search(window, "loved")                                           # English word
+    assert window.results.count() == 1
+
+
+def test_hide_button_and_restore(qapp, window):
+    search(window, "John 3:16")
     window.go_live()
-    window.controls.btn_black.click()
+    window.btn_black.click()
     pump(qapp)
     assert window.core.controller.output_payload()["mode"] == "black"
-    assert window.live_tag.text() == "■ BLACK"
-    window.controls.btn_restore.click()
+    assert window.live_tag.text() == "HIDDEN" and window.btn_black.text() == "Show"
+    window.btn_black.click()                                          # click again: shown
     pump(qapp)
     assert window.core.controller.output_payload()["mode"] == "live"
-    assert not window.controls.btn_black.isChecked()
+    window.core.controller.clear()
+    window.controls.btn_restore.click()                               # Settings → Restore last slide
+    assert window.core.controller.output_payload()["mode"] == "live"
 
 
-def test_selection_navigation_and_range(qapp, window):
-    window.nav.ref_edit.setText("John 3:16")
-    window.nav.lookup_reference()
-    window.btn_next_v.click()
-    assert window.selected.reference("en") == "John 3:17"
-    window.to_spin.setValue(18)
-    assert window.selected.reference("en") == "John 3:17–18"
+def test_one_verse_at_a_time_queue(qapp, verse_window):
+    w = verse_window
+    search(w, "John 3:16-18")
+    assert w.page_label.text() == "verse 1 of 3"
+    w.go_live()
+    assert w.core.controller.output_payload()["slide"]["reference"]["en"] == "John 3:16"
+    assert w.page_label.text() == "verse 2 of 3"                      # next verse queued automatically
+    w._verse_clicked(QUrl("verse:3:18"))                              # click verse 18 in the table
+    assert w.page_label.text() == "verse 3 of 3"
+    w.go_live()
+    assert w.core.controller.output_payload()["slide"]["reference"]["en"] == "John 3:18"
+    w.next_live()
+    assert w.core.controller.live_passage.reference("en") == "John 4:1"
+
+
+def test_chapter_buttons_favourites_and_chips(qapp, window):
+    search(window, "John 3:16")
     window.btn_next_ch.click()
     assert window.selected.reference("en") == "John 4:1"
-    assert window.core.controller.output_payload()["mode"] == "clear"   # still nothing live
-
-
-def test_search_and_favourites(qapp, window):
-    window.nav.search_edit.setText("eternelle")
-    window.nav.search_lang.setCurrentIndex(1)
-    window.nav.run_search()
-    assert window.nav.results.count() == 1
-    window.nav._passage_item(window.nav.results.item(0))
-    assert window.selected.reference("fr") == "Jean 3:16"
+    window.btn_prev_ch.click()
+    assert window.selected.reference("en") == "John 3:16"
     window.toggle_favourite()
-    assert window.nav.fav_list.count() == 1
-    assert window.nav.recent_list.count() >= 1
+    assert window.btn_fav.text() == "★ Saved"
+    labels = [window.chips_box.itemAt(i).widget().text() for i in range(window.chips_box.count())]
+    assert "★ John 3:16" in labels and "John 4:1" in labels
 
 
-def test_appearance_controls_change_output_style(qapp, window):
-    window.controls.layout_combo.setCurrentIndex(1)
-    window.controls.order_combo.setCurrentIndex(1)
-    window.controls.en_size.setValue(80)
+def test_browse_window_selects_passages(qapp, window):
+    window.open_browse()
+    nav = window.nav
+    for i in range(nav.book_list.count()):
+        if nav.book_list.item(i).text().startswith("Jude"):
+            nav.book_list.setCurrentRow(i)
+    pump(qapp)
+    assert window.selected.reference("en") == "Jude 1:1"
+    window.browse_dialog.hide()
+
+
+def test_translation_menu_can_hide_french(qapp, window):
+    search(window, "John 3:16")
+    window._choose_translation("fr", None)
+    assert window.btn_fr.text() == "FR off"
+    assert window.core.french is None
+    assert "FRANÇAIS" not in window.text_view.toPlainText()
+
+
+def test_settings_change_output_style(qapp, window):
+    window.open_settings()
+    c = window.controls
+    c.layout_combo.setCurrentIndex(1)
+    c.order_combo.setCurrentIndex(1)
+    c.en_size.setValue(80)
     st = window.core.controller.output_payload()["style"]
     assert (st["layout"], st["order"], st["en_size"]) == ("stacked", "fr-en", 80)
     assert window.core.settings.get("style")["en_size"] == 80
+    window.settings_dialog.hide()

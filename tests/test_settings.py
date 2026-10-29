@@ -94,3 +94,15 @@ def test_retired_bundled_bible_is_removed_but_user_imports_are_kept(tmp_path, fi
     core = AppCore(data_dir=tmp_path / "d2", bundled_dir=bundled)
     assert core.repo.find_by_code("WEB").name == "My WEB"
     core.close()
+
+
+def test_old_default_font_is_upgraded_but_a_chosen_font_is_kept(tmp_path):
+    from app.storage.settings_store import SettingsStore as S
+    for folder, font, expected in (("a", "Segoe UI", "EB Garamond"), ("b", "Arial", "Arial")):
+        s = S(tmp_path / folder / "settings.sqlite")
+        s.set("style", {"font_family": font, "en_size": 56})
+        s.set("style_version", 2)
+        s.close()
+        core = AppCore(data_dir=tmp_path / folder, bundled_dir=tmp_path / "none")
+        assert core.style["font_family"] == expected
+        core.close()

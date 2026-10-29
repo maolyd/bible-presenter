@@ -6,34 +6,33 @@ Tick each box. Write down anything that fails.
 **Setup**
 
 - [ ] Bible Presenter starts; no error message.
-- [ ] *Bible library…* status is green: complete English and French Bibles installed.
-- [ ] Top left shows English = `KJV — King James Version`, French = `LSG — Louis Segond 1910`.
-- [ ] Server section: **● Running**, URL `http://127.0.0.1:8765/presentation`.
+- [ ] The top bar shows **KJV** and **LSG** (KJV button → *Bible library…* is green: complete English and French Bibles).
+- [ ] Bottom right: **● OBS · 127.0.0.1:8765/presentation** with a green dot.
 - [ ] OBS: scene **Bible Presentation** with Browser Source **Bible Output**, 1920×1080, that URL.
 
 **Preview / live**
 
-- [ ] Type `John 3:16` → Enter. Centre shows KJV and LSG side by side, and the PREVIEW slide.
+- [ ] Type `John 3:16` in the search bar → Enter. KJV and LSG appear side by side in Garamond; the **Next** preview shows the slide.
 - [ ] OBS has **not** changed.
 - [ ] Click **GO LIVE** → OBS shows John 3:16 in English and French in a **footer band** at the bottom, reference below the text, nothing else (no buttons, menus, scrollbars). The camera is visible above the band.
 - [ ] Type `Jean 3:16-18` → preview changes; OBS still shows 3:16 only.
-- [ ] **GO LIVE** → OBS shows Jean 3:16 with `(1/3)`; **Next live verse ▶** shows 3:17 then 3:18, one verse at a time.
-- [ ] *On air* monitor (top right) matches OBS.
-- [ ] Browse: click *Psalms → 23 → verse 1*, then Shift+click verse 6 → the centre text shows Psalm 23:1–6; the preview shows verse 1 with *Preview page 1 of 6*.
-- [ ] Search tab: search `berger` in French → results; click one → preview.
-- [ ] Favourites: click ☆ *Add to favourites*; it appears in the Favourites tab; clicking it selects the passage.
-- [ ] Recent tab lists the passages you viewed.
+- [ ] **GO LIVE** → OBS shows Jean 3:16 with `(1/3)`; the **Next** preview now shows 3:17 ("verse 2 of 3"). GO LIVE again → 3:17, then 3:18.
+- [ ] Click verse 18 in the table → it is highlighted and becomes **Next**.
+- [ ] The **Live** card shows the same verse as OBS.
+- [ ] **Browse**: click *Psalms → 23 → verse 1*, then Shift+click verse 6 → the passage shows Psalm 23:1–6; Next shows verse 1 of 6.
+- [ ] Search bar: `berger` → matching verses; click one → it opens.
+- [ ] **☆ Save** → becomes **★ Saved** and appears as a ★ chip at the bottom; clicking a chip opens that passage.
+- [ ] Recent chips list the passages you viewed.
 - [ ] Type `John 30:1` → red message *John has 21 chapters; chapter 30 does not exist.*
 
 **Live controls**
 
-- [ ] **Next live verse ▶** / Ctrl+Right → OBS moves one verse forward (crosses into the next chapter at the end).
-- [ ] **◀ Previous live verse** / Ctrl+Left → back.
-- [ ] **Black screen** / Ctrl+B → the footer disappears in OBS (camera still visible), operator shows *■ BLACK*.
-- [ ] **Restore** / Ctrl+R → the same verse comes back.
-- [ ] **Clear output** → OBS shows no verse; **Restore** brings the verse back.
+- [ ] **Next ▶** / Ctrl+Right → OBS moves one verse forward (crosses into the next chapter at the end).
+- [ ] **◀ Prev** / Ctrl+Left → back.
+- [ ] **Hide** / Ctrl+B → the footer disappears in OBS (camera still visible); the Live card shows *HIDDEN* and the button says **Show**. **Show** → the same verse comes back.
+- [ ] Settings → **Clear output** → OBS shows no verse; **Restore last slide** (Ctrl+R) brings it back.
 
-**Layout and appearance** (each change should appear in OBS within a second)
+**Layout and appearance** (in **Settings**; each change should appear in OBS within a second)
 
 - [ ] Layout *Stacked*: English on top, French below with a divider.
 - [ ] Order *French first* (both layouts).
@@ -58,5 +57,5 @@ Tick each box. Write down anything that fails.
 - [ ] Close Bible Presenter completely and restart it → OBS reconnects by itself.
 - [ ] **Reconnect output (reload OBS page)** → OBS page reloads and shows the current state.
 - [ ] Disconnect the internet (Wi-Fi off) → everything above still works.
-- [ ] *Fullscreen output* → **Open fullscreen** on the projector screen; Esc closes it.
+- [ ] Settings → *Fullscreen output* → **Open fullscreen** on the projector screen; Esc closes it.
 - [ ] Save the OBS scene collection (Scene Collection → Export).

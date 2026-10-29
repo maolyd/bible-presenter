@@ -66,7 +66,7 @@
     set("--bg", st.background || "#0b1530");
     set("--text", st.text_color || "#fff8ec");
     set("--ref", st.reference_color || "#e9c46a");
-    set("--font", '"' + (st.font_family || "Segoe UI") + '", "Segoe UI", Arial, sans-serif');
+    set("--font", '"' + (st.font_family || "EB Garamond") + '", "EB Garamond", Garamond, Georgia, serif');
     set("--en-size", (st.en_size || 56) + "px");
     set("--fr-size", (st.fr_size || 56) + "px");
     set("--ref-size", (st.ref_size || 40) + "px");

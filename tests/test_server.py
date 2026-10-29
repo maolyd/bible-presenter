@@ -160,3 +160,10 @@ def test_presentation_page_works_offline(mini_core):
         text = f.read_text(encoding="utf-8")
         assert not re.search(r"(src|href)\s*=\s*[\"']https?://", text), f
         assert "@import" not in text and "fonts.googleapis" not in text
+
+
+def test_bundled_font_is_served(running):
+    _, base = running
+    status, headers, body = get(base + "/fonts/EBGaramond.ttf")
+    assert status == 200 and len(body) > 100000
+    assert headers["Content-Type"].startswith("font/ttf")

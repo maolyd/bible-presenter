@@ -146,3 +146,13 @@ def test_translation_hidden_gives_single_column(mini_core):
     mini_core.set_translations(mini_core.english.id, None)
     slide = mini_core.controller.preview_payload(JOHN)["slide"]
     assert [c["lang"] for c in slide["columns"]] == ["en"]
+
+
+def test_default_font_is_bundled_serif(mini_core):
+    from pathlib import Path
+    assert mini_core.style["font_family"] == "EB Garamond"
+    fonts = Path(mini_core.web_root) / "fonts"
+    assert (fonts / "EBGaramond.ttf").stat().st_size > 100000
+    assert (fonts / "OFL-EBGaramond.txt").is_file()
+    css = (Path(mini_core.web_root) / "css" / "presentation.css").read_text(encoding="utf-8")
+    assert 'url("../fonts/EBGaramond.ttf")' in css

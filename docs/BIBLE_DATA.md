@@ -31,7 +31,7 @@ Every translation is stored by **canonical book number (1–66), chapter and ver
 
 **Only import a Bible you are allowed to use.** Most modern translations (NIV, ESV, NLT, Segond 21, Bible du Semeur, NBS, Colombe…) are copyrighted; you need the publisher's permission (often a church licence) and a file they provide. Do not copy text from websites.
 
-1. Click **Bible library…** (top left) → **Import Bible file…**
+1. Click the **KJV** (or **LSG**) button at the top → **Bible library…** → **Import Bible file…**
 2. Choose the file. The program identifies the format and shows a review screen: name, language, the number of books/chapters/verses, whether all 66 books are present, skipped books (e.g. Apocrypha), empty verses, duplicate and invalid references.
 3. Check/adjust the **name**, a short **code** (e.g. `NEG`), the **language** and the **licence/permission**, then click **Import**.
 4. If a translation with the same code exists, you are asked whether to replace it.

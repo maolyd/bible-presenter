@@ -28,7 +28,7 @@ def main() -> int:
     _log_to_file_without_console()
 
     from PySide6.QtCore import Qt
-    from PySide6.QtGui import QIcon
+    from PySide6.QtGui import QFont, QFontDatabase, QIcon
     from PySide6.QtWidgets import QApplication, QMessageBox
 
     # Required by Qt WebEngine (used for the slide preview) before the app is created.
@@ -37,6 +37,12 @@ def main() -> int:
     app.setApplicationName("Bible Presenter")
     app.setOrganizationName("BiblePresenter")
     app.setStyle("Fusion")
+    # Bundled fonts (SIL OFL): EB Garamond for scripture, Inter for the interface.
+    from app.paths import web_dir
+    for font_file in sorted((web_dir() / "fonts").glob("*.ttf")):
+        QFontDatabase.addApplicationFont(str(font_file))
+    if "Inter" in QFontDatabase.families():
+        app.setFont(QFont("Inter", 10))
     icon = os.path.join(here, "app", "resources", "bible-presenter.png")
     if os.path.exists(icon):
         app.setWindowIcon(QIcon(icon))

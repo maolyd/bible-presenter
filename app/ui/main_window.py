@@ -1,12 +1,16 @@
-"""Operator window: navigation (left), selection & preview (centre), controls (right)."""
+"""Operator window: one search bar, the passage (English | French), the next-verse preview,
+GO LIVE and the live controls. Appearance, output and server settings live in the Settings
+window; book/chapter/verse pickers in the Browse window."""
 from __future__ import annotations
 
 from PySide6.QtCore import QByteArray, Qt, QTimer, QUrl, Signal
-from PySide6.QtGui import QDesktopServices, QKeySequence, QShortcut
-from PySide6.QtWidgets import (QFrame, QHBoxLayout, QLabel, QMainWindow, QMessageBox, QPushButton,
-                               QSpinBox, QSplitter, QTextBrowser, QVBoxLayout, QWidget)
+from PySide6.QtGui import QAction, QActionGroup, QDesktopServices, QGuiApplication, QKeySequence, QShortcut
+from PySide6.QtWidgets import (QDialog, QDialogButtonBox, QFrame, QHBoxLayout, QLabel, QLineEdit,
+                               QListWidget, QListWidgetItem, QMainWindow, QMenu, QMessageBox, QPushButton,
+                               QStackedWidget, QTextBrowser, QToolButton, QVBoxLayout, QWidget)
 
 from ..bible.passage import Passage
+from ..bible.reference import ReferenceParseError
 from ..core import AppCore
 from ..server.presentation_server import ServerStartError
 from .controls_panel import ControlsPanel
@@ -16,20 +20,79 @@ from .output_window import OutputWindow
 from .slide_view import SlideView
 from .workers import run_with_progress
 
+# Used inside single-quoted HTML style attributes: Qt's rich text takes the family name unquoted
+# (quotes of either kind there, or &quot;, make it drop the whole style).
+SERIF = "EB Garamond, Garamond, Georgia, serif"
+
 APP_STYLE = """
-QMainWindow, QWidget { font-size: 10pt; }
-QGroupBox { font-weight: 600; margin-top: 10px; }
-QGroupBox::title { subcontrol-origin: margin; left: 8px; padding: 0 4px; }
-QPushButton { padding: 5px 10px; }
-QPushButton#goLive { background: #dc2626; color: white; font-size: 15pt; font-weight: 700;
-                     padding: 10px 24px; border-radius: 6px; }
+QMainWindow, QWidget#root { background: #fafafa; }
+QWidget { font-family: Inter, 'Segoe UI', system-ui, sans-serif; font-size: 10pt; color: #18181b; }
+QFrame#header { background: #ffffff; border-bottom: 1px solid #e4e4e7; }
+QLabel#appTitle { font-size: 12pt; font-weight: 700; }
+QLineEdit#search { min-height: 44px; padding: 0 14px; border: 1px solid #d4d4d8; border-radius: 12px;
+                   background: #ffffff; font-size: 12pt; }
+QLineEdit#search:focus { border: 1px solid #2563eb; }
+QPushButton, QToolButton { min-height: 40px; padding: 0 14px; border: 1px solid #d4d4d8; border-radius: 10px;
+                           background: #ffffff; font-weight: 600; }
+QPushButton:hover, QToolButton:hover { background: #f4f4f5; }
+QPushButton:disabled { color: #a1a1aa; border-color: #e4e4e7; }
+QToolButton::menu-indicator { image: none; width: 0; }
+QPushButton#chip { min-height: 32px; padding: 0 12px; border-radius: 16px; border-color: #e4e4e7;
+                   font-weight: 500; color: #3f3f46; }
+QPushButton#goLive { min-height: 56px; border: 0; border-radius: 12px; background: #dc2626; color: #ffffff;
+                     font-size: 13pt; font-weight: 700; letter-spacing: 1px; }
 QPushButton#goLive:hover { background: #b91c1c; }
-QPushButton#goLive:disabled { background: #9ca3af; }
-QLabel#previewTag { background: #2563eb; color: white; font-weight: 700; padding: 3px 8px; border-radius: 4px; }
-QLabel#liveTag { background: #dc2626; color: white; font-weight: 700; padding: 3px 8px; border-radius: 4px; }
-QLabel#liveTag[state="black"] { background: #111; }
-QLabel#liveTag[state="clear"] { background: #6b7280; }
+QPushButton#goLive:disabled { background: #e4e4e7; color: #71717a; }
+QPushButton#hide:checked { background: #18181b; border-color: #18181b; color: #ffffff; }
+QFrame#card { background: #ffffff; border: 1px solid #e4e4e7; border-radius: 14px; }
+QFrame#obs { border: 1px dashed #d4d4d8; border-radius: 12px; }
+QFrame#preview { border: 2px solid #2563eb; border-radius: 12px; background: #27272a; }
+QTextBrowser#passage, QListWidget#results { background: #ffffff; border: 1px solid #e4e4e7; border-radius: 14px; }
+QListWidget#results::item { padding: 10px 8px; border-bottom: 1px solid #f4f4f5; }
+QListWidget#results::item:selected { background: #eff6ff; color: #18181b; }
+QLabel[class="caps"] { font-size: 8pt; font-weight: 700; letter-spacing: 1px; }
 """
+
+
+class SettingsDialog(QDialog):
+    """Appearance, live output, fullscreen and OBS server settings (the former right-hand panel)."""
+
+    def __init__(self, core: AppCore, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Settings")
+        self.resize(560, 780)
+        layout = QVBoxLayout(self)
+        self.controls = ControlsPanel(core)
+        layout.addWidget(self.controls, 1)
+        buttons = QDialogButtonBox(QDialogButtonBox.Close)
+        buttons.rejected.connect(self.hide)
+        layout.addWidget(buttons)
+
+
+class BrowseDialog(QDialog):
+    """Book → chapter → verse pickers. Choosing verses updates the main window immediately."""
+
+    def __init__(self, core: AppCore, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Browse the Bible")
+        self.resize(420, 720)
+        layout = QVBoxLayout(self)
+        self.nav = NavPanel(core)
+        for i in (0, 1):                       # translations and reference boxes live in the main window
+            self.nav.layout().itemAt(i).widget().hide()
+        for i in range(1, self.nav.tabs.count()):
+            self.nav.tabs.setTabVisible(i, False)
+        layout.addWidget(self.nav, 1)
+        buttons = QDialogButtonBox(QDialogButtonBox.Close)
+        buttons.rejected.connect(self.hide)
+        layout.addWidget(buttons)
+
+
+def _caps(text: str, color: str = "#52525b") -> QLabel:
+    label = QLabel(text.upper())
+    label.setProperty("class", "caps")
+    label.setStyleSheet(f"color: {color};")
+    return label
 
 
 class MainWindow(QMainWindow):
@@ -43,22 +106,27 @@ class MainWindow(QMainWindow):
         self.output_window: OutputWindow | None = None
         self.setWindowTitle("Bible Presenter — English / Français")
         self.setStyleSheet(APP_STYLE)
+        self.setMinimumSize(1080, 680)
 
-        self.nav = NavPanel(core)
-        self.controls = ControlsPanel(core)
-        centre = self._build_centre()
+        self.settings_dialog = SettingsDialog(core, self)
+        self.controls = self.settings_dialog.controls
+        self.browse_dialog = BrowseDialog(core, self)
+        self.nav = self.browse_dialog.nav
 
-        splitter = QSplitter(Qt.Horizontal)
-        splitter.addWidget(self.nav)
-        splitter.addWidget(centre)
-        splitter.addWidget(self.controls)
-        splitter.setStretchFactor(0, 0)
-        splitter.setStretchFactor(1, 1)
-        splitter.setStretchFactor(2, 0)
-        splitter.setSizes([340, 820, 380])
-        self.splitter = splitter
-        self.setCentralWidget(splitter)
-        self.statusBar().showMessage("Ready")
+        root = QWidget()
+        root.setObjectName("root")
+        outer = QVBoxLayout(root)
+        outer.setContentsMargins(0, 0, 0, 0)
+        outer.setSpacing(0)
+        outer.addWidget(self._build_header())
+        body = QHBoxLayout()
+        body.setContentsMargins(28, 24, 28, 20)
+        body.setSpacing(28)
+        body.addWidget(self._build_passage_area(), 1)
+        body.addWidget(self._build_side())
+        outer.addLayout(body, 1)
+        self.setCentralWidget(root)
+        self.statusBar().setStyleSheet("color: #52525b;")
 
         # Controller notifications may come from a worker thread (imports); the
         # signal hands them to the GUI thread.
@@ -68,107 +136,198 @@ class MainWindow(QMainWindow):
         self._connect()
         self._shortcuts()
         self._restore_window()
+        self._refresh_translation_buttons()
+        self._refresh_chips()
         self._update_live_display(core.controller.output_payload())
         self._update_selection_display()
         QTimer.singleShot(0, self._startup)
 
     # ================================================================ layout
-    def _build_centre(self) -> QWidget:
+    def _build_header(self) -> QWidget:
+        header = QFrame()
+        header.setObjectName("header")
+        row = QHBoxLayout(header)
+        row.setContentsMargins(28, 14, 28, 14)
+        row.setSpacing(12)
+        title = QLabel("Bible Presenter")
+        title.setObjectName("appTitle")
+        row.addWidget(title)
+        row.addSpacing(8)
+        self.search = QLineEdit()
+        self.search.setObjectName("search")
+        self.search.setPlaceholderText("Reference or words — John 3:16-18 · Jean 3,16 · “so loved”")
+        self.search.setClearButtonEnabled(True)
+        self.search.setAccessibleName("Reference or words")
+        row.addWidget(self.search, 1)
+        self.btn_browse = QPushButton("Browse")
+        self.btn_browse.setToolTip("Pick a book, chapter and verses")
+        row.addWidget(self.btn_browse)
+        self.btn_en = QToolButton()
+        self.btn_fr = QToolButton()
+        for b, lang in ((self.btn_en, "en"), (self.btn_fr, "fr")):
+            b.setPopupMode(QToolButton.InstantPopup)
+            b.setToolTip("English translation" if lang == "en" else "French translation")
+            row.addWidget(b)
+        self.btn_settings = QPushButton("Settings")
+        self.btn_settings.setToolTip("Appearance, output and OBS server")
+        row.addWidget(self.btn_settings)
+        return header
+
+    def _build_passage_area(self) -> QWidget:
         w = QWidget()
-        layout = QVBoxLayout(w)
-        layout.setContentsMargins(6, 4, 6, 4)
+        col = QVBoxLayout(w)
+        col.setContentsMargins(0, 0, 0, 0)
+        col.setSpacing(14)
 
-        head = QHBoxLayout()
-        tag = QLabel("PREVIEW")
-        tag.setObjectName("previewTag")
-        tag.setToolTip("The preview is never shown to the audience until you click Go Live.")
+        title_row = QHBoxLayout()
         self.sel_label = QLabel()
-        self.sel_label.setStyleSheet("font-size:14pt;font-weight:700;")
-        head.addWidget(tag)
-        head.addWidget(self.sel_label, 1)
-        self.live_tag = QLabel("LIVE")
-        self.live_tag.setObjectName("liveTag")
-        self.live_ref = QLabel()
-        self.live_ref.setStyleSheet("font-weight:600;")
-        head.addWidget(self.live_tag)
-        head.addWidget(self.live_ref)
-        layout.addLayout(head)
+        self.sel_label.setTextFormat(Qt.RichText)
+        self.sel_label.setWordWrap(True)
+        title_row.addWidget(self.sel_label, 1)
+        self.btn_prev_ch = QPushButton("‹")
+        self.btn_next_ch = QPushButton("›")
+        for b, tip in ((self.btn_prev_ch, "Previous chapter"), (self.btn_next_ch, "Next chapter")):
+            b.setFixedWidth(44)
+            b.setToolTip(tip)
+            b.setAccessibleName(tip)
+            title_row.addWidget(b)
+        col.addLayout(title_row)
 
-        rng = QHBoxLayout()
-        rng.addWidget(QLabel("Verses:"))
-        self.from_spin = QSpinBox()
-        self.to_spin = QSpinBox()
-        self.from_spin.setPrefix("from ")
-        self.to_spin.setPrefix("to ")
-        rng.addWidget(self.from_spin)
-        rng.addWidget(self.to_spin)
-        self.btn_fav = QPushButton("☆ Add to favourites")
-        rng.addStretch(1)
-        rng.addWidget(self.btn_fav)
-        layout.addLayout(rng)
+        self.error_label = QLabel()
+        self.error_label.setWordWrap(True)
+        self.error_label.setStyleSheet("color: #b91c1c;")
+        self.error_label.hide()
+        col.addWidget(self.error_label)
 
+        self.stack = QStackedWidget()
         self.text_view = QTextBrowser()
-        self.text_view.setMinimumHeight(120)
-        layout.addWidget(self.text_view, 2)
+        self.text_view.setObjectName("passage")
+        self.text_view.setOpenLinks(False)
+        self.stack.addWidget(self.text_view)
+        results_page = QWidget()
+        rl = QVBoxLayout(results_page)
+        rl.setContentsMargins(0, 0, 0, 0)
+        self.results_label = QLabel()
+        self.results_label.setStyleSheet("color: #52525b;")
+        rl.addWidget(self.results_label)
+        self.results = QListWidget()
+        self.results.setObjectName("results")
+        self.results.setWordWrap(True)
+        self.results.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        rl.addWidget(self.results, 1)
+        self.stack.addWidget(results_page)
+        col.addWidget(self.stack, 1)
 
-        self.preview_view = SlideView()
-        self.preview_view.setMinimumHeight(220)
-        frame = QFrame()
-        frame.setFrameShape(QFrame.Box)
-        frame.setStyleSheet("QFrame { border: 3px solid #2563eb; }")
-        fl = QVBoxLayout(frame)
-        fl.setContentsMargins(2, 2, 2, 2)
-        fl.addWidget(self.preview_view)
-        layout.addWidget(frame, 3)
-
-        pages = QHBoxLayout()
-        self.btn_prev_page = QPushButton("◀ Page")
-        self.btn_next_page = QPushButton("Page ▶")
-        self.page_label = QLabel()
-        pages.addWidget(self.btn_prev_page)
-        pages.addWidget(self.page_label)
-        pages.addWidget(self.btn_next_page)
-        pages.addStretch(1)
-        layout.addLayout(pages)
-
-        nav = QHBoxLayout()
-        self.btn_prev_ch = QPushButton("⏮ Prev chapter")
-        self.btn_prev_v = QPushButton("◀ Prev verse")
-        self.btn_next_v = QPushButton("Next verse ▶")
-        self.btn_next_ch = QPushButton("Next chapter ⏭")
-        self.btn_clear_sel = QPushButton("Clear selection")
-        self.btn_go_live = QPushButton("GO LIVE")
-        self.btn_go_live.setObjectName("goLive")
-        self.btn_go_live.setToolTip("Send the preview to the audience (Ctrl+Enter or F5)")
-        for b in (self.btn_prev_ch, self.btn_prev_v, self.btn_next_v, self.btn_next_ch, self.btn_clear_sel):
-            nav.addWidget(b)
-        nav.addStretch(1)
-        nav.addWidget(self.btn_go_live)
-        layout.addLayout(nav)
+        chips = QHBoxLayout()
+        chips.setSpacing(8)
+        recent = QLabel("Recent")
+        recent.setStyleSheet("color: #52525b;")
+        chips.addWidget(recent)
+        self.chips_box = QHBoxLayout()
+        self.chips_box.setSpacing(8)
+        chips.addLayout(self.chips_box)
+        chips.addStretch(1)
+        self.btn_fav = QPushButton("☆ Save")
+        self.btn_fav.setObjectName("chip")
+        self.btn_fav.setToolTip("Add this passage to your favourites")
+        chips.addWidget(self.btn_fav)
+        col.addLayout(chips)
         return w
 
-    def _connect(self):
-        self.nav.passageChosen.connect(self.select_passage)
-        self.nav.translationsChanged.connect(self._translations_changed)
-        self.nav.manageLibraryRequested.connect(lambda: self.open_library(first_run=False))
-        self.nav.infoRequested.connect(self.show_translation_info)
+    def _build_side(self) -> QWidget:
+        side = QWidget()
+        side.setFixedWidth(430)
+        col = QVBoxLayout(side)
+        col.setContentsMargins(0, 0, 0, 0)
+        col.setSpacing(12)
 
-        self.from_spin.valueChanged.connect(self._range_changed)
-        self.to_spin.valueChanged.connect(self._range_changed)
-        self.btn_fav.clicked.connect(self.toggle_favourite)
-        self.btn_prev_v.clicked.connect(lambda: self._step(self.core.service.prev_verse))
-        self.btn_next_v.clicked.connect(lambda: self._step(self.core.service.next_verse))
+        head = QHBoxLayout()
+        head.addWidget(_caps("Next", "#1d4ed8"))
+        head.addStretch(1)
+        self.page_label = QLabel()
+        self.page_label.setStyleSheet("color: #52525b;")
+        head.addWidget(self.page_label)
+        col.addLayout(head)
+
+        frame = QFrame()
+        frame.setObjectName("preview")
+        fl = QVBoxLayout(frame)
+        fl.setContentsMargins(2, 2, 2, 2)
+        self.preview_view = SlideView()
+        self.preview_view.setFixedHeight(238)
+        fl.addWidget(self.preview_view)
+        col.addWidget(frame)
+
+        self.btn_go_live = QPushButton("GO LIVE")
+        self.btn_go_live.setObjectName("goLive")
+        self.btn_go_live.setToolTip("Send the next verse to OBS (Ctrl+Enter or F5)")
+        col.addWidget(self.btn_go_live)
+        col.addSpacing(8)
+
+        card = QFrame()
+        card.setObjectName("card")
+        cl = QVBoxLayout(card)
+        cl.setContentsMargins(16, 14, 16, 16)
+        cl.setSpacing(12)
+        live_row = QHBoxLayout()
+        live_row.setSpacing(8)
+        self.live_dot = QLabel("●")
+        live_row.addWidget(self.live_dot)
+        self.live_tag = _caps("Live", "#b91c1c")
+        live_row.addWidget(self.live_tag)
+        self.live_ref = QLabel()
+        self.live_ref.setWordWrap(True)
+        live_row.addWidget(self.live_ref, 1)
+        cl.addLayout(live_row)
+        buttons = QHBoxLayout()
+        buttons.setSpacing(8)
+        self.btn_prev_live = QPushButton("◀ Prev")
+        self.btn_next_live = QPushButton("Next ▶")
+        self.btn_black = QPushButton("Hide")
+        self.btn_black.setObjectName("hide")
+        self.btn_black.setCheckable(True)
+        self.btn_prev_live.setToolTip("Ctrl+Left: previous verse on screen")
+        self.btn_next_live.setToolTip("Ctrl+Right: next verse on screen")
+        self.btn_black.setToolTip("Ctrl+B: hide the verse (camera stays visible); click again to show it")
+        for b in (self.btn_prev_live, self.btn_next_live, self.btn_black):
+            buttons.addWidget(b)
+        cl.addLayout(buttons)
+        col.addWidget(card)
+
+        obs = QFrame()
+        obs.setObjectName("obs")
+        ol = QHBoxLayout(obs)
+        ol.setContentsMargins(14, 8, 8, 8)
+        self.obs_dot = QLabel("●")
+        ol.addWidget(self.obs_dot)
+        self.obs_label = QLabel()
+        self.obs_label.setStyleSheet("color: #3f3f46;")
+        ol.addWidget(self.obs_label, 1)
+        self.btn_copy_url = QPushButton("Copy")
+        self.btn_copy_url.setToolTip("Copy the address for the OBS Browser Source")
+        ol.addWidget(self.btn_copy_url)
+        col.addWidget(obs)
+        col.addStretch(1)
+        return side
+
+    def _connect(self):
+        self.search.returnPressed.connect(self.run_search)
+        self.btn_browse.clicked.connect(self.open_browse)
+        self.btn_settings.clicked.connect(self.open_settings)
+        self.nav.passageChosen.connect(self.select_passage)
+        self.text_view.anchorClicked.connect(self._verse_clicked)
+        self.results.itemClicked.connect(self._result_chosen)
+        self.results.itemActivated.connect(self._result_chosen)
         self.btn_prev_ch.clicked.connect(lambda: self._step(self.core.service.prev_chapter))
         self.btn_next_ch.clicked.connect(lambda: self._step(self.core.service.next_chapter))
-        self.btn_clear_sel.clicked.connect(lambda: self.select_passage(None))
+        self.btn_fav.clicked.connect(self.toggle_favourite)
         self.btn_go_live.clicked.connect(self.go_live)
-        self.btn_prev_page.clicked.connect(lambda: self._change_preview_page(-1))
-        self.btn_next_page.clicked.connect(lambda: self._change_preview_page(1))
+        self.btn_prev_live.clicked.connect(self.prev_live)
+        self.btn_next_live.clicked.connect(self.next_live)
+        self.btn_black.toggled.connect(self._hide_toggled)
+        self.btn_copy_url.clicked.connect(self._copy_url)
 
         c = self.controls
-        c.prevLive.connect(self.prev_live)
-        c.nextLive.connect(self.next_live)
-        c.blackToggled.connect(self.core.controller.set_black)
         c.restoreLive.connect(self.restore_live)
         c.clearLive.connect(self.core.controller.clear)
         c.openFullscreen.connect(self.open_fullscreen)
@@ -187,17 +346,16 @@ class MainWindow(QMainWindow):
         sc(["Ctrl+R"], self.restore_live)
         sc(["Ctrl+Right"], self.next_live)
         sc(["Ctrl+Left"], self.prev_live)
-        sc(["Alt+Right"], lambda: self._step(self.core.service.next_verse))
-        sc(["Alt+Left"], lambda: self._step(self.core.service.prev_verse))
-        sc(["Ctrl+L"], lambda: (self.nav.ref_edit.setFocus(), self.nav.ref_edit.selectAll()))
-        sc(["Ctrl+F"], lambda: (self.nav.tabs.setCurrentIndex(1), self.nav.search_edit.setFocus()))
+        sc(["Alt+Right"], lambda: self._move_preview(1))
+        sc(["Alt+Left"], lambda: self._move_preview(-1))
+        sc(["Ctrl+L", "Ctrl+F"], lambda: (self.search.setFocus(), self.search.selectAll()))
 
     # ================================================================ startup / shutdown
     def _startup(self):
         if self.core.settings.get("auto_start_server", True):
             self.start_server(self.core.server.port, quiet=True)
         else:
-            self.controls.set_server_status(False)
+            self._set_server_status(False)
         st = self.core.library_status()
         if st["count"] == 0 and self.core.bundled_catalog():
             self.install_bundled_bibles()          # first start: no clicks needed
@@ -215,115 +373,235 @@ class MainWindow(QMainWindow):
         if geo:
             self.restoreGeometry(QByteArray.fromBase64(geo.encode()))
         else:
-            self.resize(1500, 900)
-        split = self.core.settings.get("splitter_state")
-        if split:
-            self.splitter.restoreState(QByteArray.fromBase64(split.encode()))
+            self.resize(1440, 900)
 
     def closeEvent(self, event):
         self.core.settings.set("window_geometry", bytes(self.saveGeometry().toBase64()).decode())
-        self.core.settings.set("splitter_state", bytes(self.splitter.saveState().toBase64()).decode())
         self.close_fullscreen()
         self.core.close()
         super().closeEvent(event)
 
-    # ================================================================ selection & preview
+    def open_settings(self):
+        self.settings_dialog.show()
+        self.settings_dialog.raise_()
+
+    def open_browse(self):
+        self.nav.show_passage(self.selected)
+        self.browse_dialog.show()
+        self.browse_dialog.raise_()
+
+    # ================================================================ translations
+    def _refresh_translation_buttons(self):
+        for button, lang in ((self.btn_en, "en"), (self.btn_fr, "fr")):
+            current = self.core.english if lang == "en" else self.core.french
+            button.setText(current.code if current else ("EN off" if lang == "en" else "FR off"))
+            menu = QMenu(button)
+            group = QActionGroup(menu)
+            for t in self.core.repo.list_translations(lang):
+                act = QAction(t.label + ("" if t.is_complete else " (partial)"), menu, checkable=True)
+                act.setChecked(current is not None and current.id == t.id)
+                act.triggered.connect(lambda _=False, tid=t.id, lg=lang: self._choose_translation(lg, tid))
+                group.addAction(act)
+                menu.addAction(act)
+            off = QAction("Hide English" if lang == "en" else "Hide French", menu, checkable=True)
+            off.setChecked(current is None)
+            off.triggered.connect(lambda _=False, lg=lang: self._choose_translation(lg, None))
+            group.addAction(off)
+            menu.addAction(off)
+            menu.addSeparator()
+            menu.addAction("Bible library…", lambda: self.open_library(first_run=False))
+            menu.addAction("Translation information…", self.show_translation_info)
+            button.setMenu(menu)
+
+    def _choose_translation(self, lang: str, tid: int | None):
+        en = self.core.english.id if self.core.english else None
+        fr = self.core.french.id if self.core.french else None
+        if lang == "en":
+            en = tid
+        else:
+            fr = tid
+        self.core.set_translations(en, fr)
+        self._after_library_change()
+
+    def _after_library_change(self):
+        self._refresh_translation_buttons()
+        self.nav.reload_translations()
+        self._translations_changed()
+
+    # ================================================================ search & selection
     def tids(self):
         return self.core.tids()
+
+    def run_search(self):
+        """A reference (John 3:16, Jean 3,16) opens the passage; anything else searches the words."""
+        text = self.search.text().strip()
+        self.error_label.hide()
+        if not text:
+            return
+        quoted = text[:1] in "\"“"
+        if not quoted:
+            try:
+                passage = self.core.service.resolve(text, self.tids())
+            except ReferenceParseError as exc:
+                if any(ch.isdigit() for ch in text):         # clearly meant as a reference
+                    self.error_label.setText(str(exc))
+                    self.error_label.show()
+                    return
+            else:
+                self.select_passage(passage)
+                return
+        self._show_word_results(text)
+
+    def _show_word_results(self, query: str):
+        self.results.clear()
+        seen = set()
+        hits = []
+        for t in (self.core.english, self.core.french):
+            if not t:
+                continue
+            for b, c, v, txt in self.core.repo.search(t.id, query, limit=200):
+                if (b, c, v) not in seen:
+                    seen.add((b, c, v))
+                    hits.append((b, c, v, txt, t))
+        hits.sort(key=lambda h: h[:3])
+        for b, c, v, txt, t in hits[:300]:
+            p = Passage(b, c, v, c, v)
+            item = QListWidgetItem(f"{p.reference(t.language)}  —  {txt}")
+            item.setData(Qt.UserRole, p)
+            item.setFont(self._serif_font(12))
+            self.results.addItem(item)
+        shown = min(len(hits), 300)
+        self.results_label.setText(f"{shown} verse{'s' if shown != 1 else ''} containing “{query.strip(chr(34))}”"
+                                   " — click one to open it." if hits else
+                                   f"No verse contains “{query}”. Accents and capitals are ignored.")
+        self.stack.setCurrentIndex(1)
+
+    def _serif_font(self, size: int):
+        font = self.font()
+        font.setFamilies(["EB Garamond", "Garamond", "Georgia"])
+        font.setPointSize(size)
+        return font
+
+    def _result_chosen(self, item: QListWidgetItem):
+        p = item.data(Qt.UserRole)
+        if isinstance(p, Passage):
+            self.select_passage(p)
 
     def select_passage(self, passage: Passage | None, remember: bool = True):
         self.selected = passage
         self.preview_page = 0
-        self.nav.show_passage(passage)
+        self.stack.setCurrentIndex(0)
+        if self.browse_dialog.isVisible():
+            self.nav.show_passage(passage)
         if passage is not None:
             self.core.settings.set("last_selection", passage.to_dict())
             if remember:
-                self.core.settings.add_recent(passage.to_dict(), f"{passage.reference('en')}  ·  {passage.reference('fr')}")
-                self.nav.refresh_recent()
+                self.core.settings.add_recent(passage.to_dict(), passage.reference("en"))
+                self._refresh_chips()
         self._update_selection_display()
 
     def _update_selection_display(self):
         p = self.selected
         has = p is not None and bool(self.tids())
-        for b in (self.btn_go_live, self.btn_prev_v, self.btn_next_v, self.btn_prev_ch, self.btn_next_ch,
-                  self.btn_clear_sel, self.btn_fav, self.from_spin, self.to_spin):
+        for b in (self.btn_go_live, self.btn_prev_ch, self.btn_next_ch, self.btn_fav):
             b.setEnabled(has)
         if not has:
-            self.sel_label.setText("No passage selected" if self.tids() else "No Bible selected — open the Bible library")
-            self.text_view.setHtml("<p style='color:#666'>Choose a book, chapter and verse on the left, type a "
-                                   "reference such as <b>John 3:16</b> or <b>Jean 3:16</b>, or search for words.</p>")
+            self.sel_label.setText(f"<span style='font-family:{SERIF}; font-size:22pt; font-weight:600'>"
+                                   f"{'Find a passage' if self.tids() else 'No Bible installed'}</span>")
+            self.text_view.setHtml(
+                "<p style='color:#52525b; font-size:11pt; margin:16px'>Type a reference such as "
+                "<b>John 3:16</b> or <b>Jean 3,16</b> in the search bar, search for words, or click "
+                "<b>Browse</b>.</p>" if self.tids() else
+                "<p style='color:#52525b; margin:16px'>Open the KJV / LSG button → <b>Bible library…</b></p>")
             self.preview_view.render(self.core.controller.preview_payload(None))
             self.page_label.setText("")
-            self.btn_prev_page.setEnabled(False)
-            self.btn_next_page.setEnabled(False)
             return
-        self.sel_label.setText(f"{p.reference('en')}  ·  {p.reference('fr')}")
-        self._sync_range_spins(p)
-        self.btn_fav.setText("★ Remove favourite" if self.core.settings.is_favourite(p.to_dict())
-                             else "☆ Add to favourites")
-        self._render_text(p)
+        self.sel_label.setText(
+            f"<span style='font-family:{SERIF}; font-size:22pt; font-weight:600'>{_esc(p.reference('en'))}</span>"
+            f"<span style='font-family:{SERIF}; font-size:22pt; font-style:italic; color:#52525b'>"
+            f"  ·  {_esc(p.reference('fr'))}</span>")
+        fav = self.core.settings.is_favourite(p.to_dict())
+        self.btn_fav.setText("★ Saved" if fav else "☆ Save")
         self._render_preview()
+        self._render_text(p)
 
-    def _sync_range_spins(self, p: Passage):
-        verses = self.core.service.verses(p.book, p.start_chapter, self.tids())
-        for spin in (self.from_spin, self.to_spin):
-            spin.blockSignals(True)
-            spin.setRange(verses[0] if verses else 1, verses[-1] if verses else 1)
-        self.from_spin.setValue(p.start_verse)
-        self.to_spin.setValue(p.end_verse if p.end_chapter == p.start_chapter else verses[-1])
-        # Cross-chapter selections are edited by typing a reference; the spins cover one chapter.
-        multi = p.end_chapter != p.start_chapter
-        self.to_spin.setEnabled(not multi)
-        for spin in (self.from_spin, self.to_spin):
-            spin.blockSignals(False)
-
-    def _range_changed(self):
-        p = self.selected
-        if p is None:
-            return
-        a, b = self.from_spin.value(), self.to_spin.value()
-        if self.sender() is self.from_spin and a > b:
-            b = a
-        if self.sender() is self.to_spin and b < a:
-            a = b
-        end_ch = p.end_chapter if p.end_chapter != p.start_chapter else p.start_chapter
-        end_v = b if end_ch == p.start_chapter else p.end_verse
-        self.select_passage(Passage(p.book, p.start_chapter, a, end_ch, end_v), remember=False)
+    def _pages(self) -> list:
+        return self.core._build_pages(self.selected, self.core.style) if self.selected else []
 
     def _render_text(self, p: Passage):
+        """The passage as a table: verse number | English | French. Click a verse to queue it."""
         en, fr = self.core.english, self.core.french
         rows = self.core.service.aligned(p, self.tids())
         multi = p.start_chapter != p.end_chapter
-        head = "<tr><th></th>" + "".join(f"<th align='left'>{_esc(t.code)}</th>" for t in (en, fr) if t) + "</tr>"
+        pages = self._pages()
+        on_page = set()
+        if pages and 0 <= self.preview_page < len(pages) and pages[self.preview_page]["columns"]:
+            on_page = {v["num"] for v in pages[self.preview_page]["columns"][0]["verses"]}
+        head = ("<tr><td></td>" + "".join(
+            f"<td style='font-family:Inter, Segoe UI, sans-serif; color:#52525b; font-size:8pt; font-weight:700; "
+            f"padding:10px 8px'>"
+            f"{'ENGLISH' if t.language == 'en' else 'FRANÇAIS'} · {_esc(t.code)}</td>" for t in (en, fr) if t) + "</tr>")
         body = []
         for av in rows:
             num = f"{av.chapter}:{av.verse}" if multi else str(av.verse)
+            link = f"verse:{av.chapter}:{av.verse}"
+            bg = "#eff6ff" if num in on_page else "#ffffff"
+            numcolor = "#1d4ed8" if num in on_page else "#71717a"
             cells = []
             for t in (en, fr):
                 if not t:
                     continue
                 txt = av.texts.get(t.id)
-                cells.append(f"<td valign='top' width='50%'>{_esc(txt)}</td>" if txt is not None else
-                             "<td valign='top' style='color:#b45309'><i>⚠ This verse is not in "
-                             f"{_esc(t.code)} (numbering or source text differs)</i></td>")
-            body.append(f"<tr><td valign='top' nowrap style='color:#888'><b>{num}</b></td>{''.join(cells)}</tr>")
-        self.text_view.setHtml(f"<table cellspacing='6' width='100%'>{head}{''.join(body)}</table>")
+                if txt is None:
+                    cells.append(f"<td valign='top' style='padding:12px 8px; color:#b45309; font-style:italic'>"
+                                 f"<a href='{link}' style='color:#b45309; text-decoration:none'>This verse is not in "
+                                 f"{_esc(t.code)} (numbering or source text differs)</a></td>")
+                else:
+                    cells.append(f"<td valign='top' width='50%' style='padding:12px 8px'>"
+                                 f"<a href='{link}' style='color:#18181b; text-decoration:none'>{_esc(txt)}</a></td>")
+            body.append(f"<tr style='background:{bg}'><td valign='top' nowrap width='44' "
+                        f"style='padding:12px 8px 12px 14px; white-space:nowrap'>"
+                        f"<a href='{link}' style='color:{numcolor}; font-weight:700; text-decoration:none'>{num}</a>"
+                        f"</td>{''.join(cells)}</tr>")
+        self.text_view.setHtml(
+            f"<div style='font-family:{SERIF}; font-size:14pt; line-height:140%'>"
+            f"<table cellspacing='0' width='100%'>{head}{''.join(body)}</table></div>")
+
+    def _verse_clicked(self, url):
+        """Queue the clicked verse as the next one to go live."""
+        try:
+            _, c, v = url.toString().split(":")
+            c, v = int(c), int(v)
+        except ValueError:
+            return
+        multi = self.selected.start_chapter != self.selected.end_chapter
+        key = f"{c}:{v}" if multi else str(v)
+        for i, page in enumerate(self._pages()):
+            if page["columns"] and key in {x["num"] for x in page["columns"][0]["verses"]}:
+                self.preview_page = i
+                break
+        self._render_preview()
+        self._render_text(self.selected)
 
     def _render_preview(self):
         payload = self.core.controller.preview_payload(self.selected, self.preview_page)
         slide = payload.get("slide")
-        pages = slide["pages"] if slide else 0
-        self.preview_page = (slide["page"] - 1) if slide else 0
-        self.page_label.setText(f"Preview page {slide['page']} of {pages}" if pages > 1 else "")
-        self.btn_prev_page.setEnabled(pages > 1 and self.preview_page > 0)
-        self.btn_next_page.setEnabled(pages > 1 and self.preview_page < pages - 1)
-        self.btn_prev_page.setVisible(pages > 1)
-        self.btn_next_page.setVisible(pages > 1)
+        if slide:
+            self.preview_page = slide["page"] - 1
+            unit = "verse" if self.core.style.get("verses_per_slide") == 1 else "slide"
+            self.page_label.setText(f"{unit} {slide['page']} of {slide['pages']}" if slide["pages"] > 1 else "")
+        else:
+            self.page_label.setText("")
         self.preview_view.render(payload)
 
-    def _change_preview_page(self, delta: int):
-        self.preview_page += delta
+    def _move_preview(self, delta: int):
+        """Alt+Right / Alt+Left: queue the next / previous verse of the passage."""
+        pages = self._pages()
+        if not pages:
+            return
+        self.preview_page = max(0, min(len(pages) - 1, self.preview_page + delta))
         self._render_preview()
+        self._render_text(self.selected)
 
     def _step(self, fn):
         if self.selected is None:
@@ -341,9 +619,34 @@ class MainWindow(QMainWindow):
         if self.core.settings.is_favourite(p.to_dict()):
             self.core.settings.remove_favourite(p.to_dict())
         else:
-            self.core.settings.add_favourite(p.to_dict(), f"{p.reference('en')}  ·  {p.reference('fr')}")
+            self.core.settings.add_favourite(p.to_dict(), p.reference("en"))
         self.nav.refresh_favourites()
+        self._refresh_chips()
         self._update_selection_display()
+
+    def _refresh_chips(self):
+        while self.chips_box.count():
+            item = self.chips_box.takeAt(0)
+            if item.widget():
+                item.widget().deleteLater()
+        shown = set()
+        entries = [(d, "★ " + label) for d, label in self.core.settings.favourites()[:4]]
+        entries += [(d, label) for d, label in self.core.settings.recent()]
+        for d, label in entries:
+            key = tuple(sorted(d.items()))
+            if key in shown:
+                continue
+            shown.add(key)
+            try:
+                passage = Passage.from_dict(d)
+            except (KeyError, ValueError, TypeError):
+                continue
+            chip = QPushButton(label.split("  ·  ")[0])
+            chip.setObjectName("chip")
+            chip.clicked.connect(lambda _=False, p=passage: self.select_passage(p))
+            self.chips_box.addWidget(chip)
+            if len(shown) >= 6:
+                break
 
     def _translations_changed(self):
         if self.selected:
@@ -363,7 +666,9 @@ class MainWindow(QMainWindow):
         except ValueError as exc:
             QMessageBox.warning(self, "Cannot go live", str(exc))
             return
-        self.statusBar().showMessage(f"LIVE: {self.selected.reference('en')}", 4000)
+        # Queue the following verse, ready for the next GO LIVE.
+        if self.preview_page < len(self._pages()) - 1:
+            self._move_preview(1)
 
     def next_live(self):
         if not self.core.controller.next_live():
@@ -377,58 +682,77 @@ class MainWindow(QMainWindow):
         if not self.core.controller.restore():
             self.statusBar().showMessage("There is no previous live slide to restore.", 3000)
 
+    def _hide_toggled(self, hidden: bool):
+        if hidden != self.core.controller.is_black:
+            self.core.controller.set_black(hidden)
+
     def _on_output_changed(self, payload: dict):
         self._update_live_display(payload)
-        # Appearance changes affect the preview too.
+        # Appearance changes affect the preview (and which verses it covers) too.
         if self.selected is not None:
             self._render_preview()
+            self._render_text(self.selected)
 
     def _update_live_display(self, payload: dict):
         mode = payload.get("mode")
-        live = self.core.controller.live_passage or (self.core.controller.state.last_live.passage
-                                                     if self.core.controller.state.last_live else None)
+        controller = self.core.controller
+        live = controller.live_passage or (controller.state.last_live.passage if controller.state.last_live else None)
         slide = payload.get("slide")
+        serif = f"font-family:{SERIF}; font-size:14pt; font-weight:600"
         if mode == "live" and slide:
-            ref = slide["reference"]["en"]
-            page = f" (page {slide['page']}/{slide['pages']})" if slide["pages"] > 1 else ""
-            self.live_tag.setText("● LIVE")
-            self.live_tag.setProperty("state", "live")
-            self.live_ref.setText(ref + page)
-            self.controls.live_label.setText(f"<span style='color:#dc2626'>● LIVE:</span> {ref}{page}")
+            ref = f"{slide['reference']['en']}  ·  {slide['reference']['fr']}"
+            self.live_dot.setStyleSheet("color: #dc2626;")
+            self.live_tag.setText("LIVE")
+            self.live_tag.setStyleSheet("color: #b91c1c;")
+            self.live_ref.setText(f"<span style='{serif}'>{_esc(ref)}</span>")
         elif mode == "black":
-            self.live_tag.setText("■ BLACK")
-            self.live_tag.setProperty("state", "black")
-            self.live_ref.setText(f"(hidden: {live.reference('en')})" if live else "")
-            self.controls.live_label.setText("■ <b>Black screen</b> — the audience sees nothing. "
-                                             "Click Restore (Ctrl+R) to show the verse again.")
+            self.live_dot.setStyleSheet("color: #18181b;")
+            self.live_tag.setText("HIDDEN")
+            self.live_tag.setStyleSheet("color: #18181b;")
+            self.live_ref.setText(f"<span style='{serif}; color:#71717a'>{_esc(live.reference('en'))}</span>"
+                                  if live else "")
         else:
+            self.live_dot.setStyleSheet("color: #d4d4d8;")
             self.live_tag.setText("NOTHING LIVE")
-            self.live_tag.setProperty("state", "clear")
+            self.live_tag.setStyleSheet("color: #71717a;")
             self.live_ref.setText("")
-            self.controls.live_label.setText("Nothing is live. Select a passage and click GO LIVE.")
-        self.live_tag.style().unpolish(self.live_tag)
-        self.live_tag.style().polish(self.live_tag)
-        self.controls.set_black_checked(mode == "black")
-        self.controls.live_view.render(payload)
+        self.btn_black.blockSignals(True)
+        self.btn_black.setChecked(mode == "black")
+        self.btn_black.setText("Show" if mode == "black" else "Hide")
+        self.btn_black.blockSignals(False)
 
     # ================================================================ server & output
+    def _set_server_status(self, running: bool, url: str = "", error: str = ""):
+        self.controls.set_server_status(running, url, error)
+        if running:
+            self.obs_dot.setStyleSheet("color: #16a34a;")
+            self.obs_label.setText("OBS · " + url.replace("http://", ""))
+        else:
+            self.obs_dot.setStyleSheet("color: #dc2626;" if error else "color: #a1a1aa;")
+            self.obs_label.setText("OBS server not running — Settings" if not error else "OBS server error — see Settings")
+        self.btn_copy_url.setEnabled(running)
+
+    def _copy_url(self):
+        QGuiApplication.clipboard().setText(self.core.server.url)
+        self.statusBar().showMessage(f"Copied {self.core.server.url} — paste it into the OBS Browser Source.", 5000)
+
     def start_server(self, port: int, quiet: bool = False):
         try:
             url = self.core.start_server(int(port))
         except ServerStartError as exc:
-            self.controls.set_server_status(False, error=str(exc))
+            self._set_server_status(False, error=str(exc))
             QMessageBox.warning(self, "Presentation server did not start",
                                 f"{exc}\n\nThe rest of the program still works; OBS cannot show verses until "
                                 "the server is running.")
             return
-        self.controls.set_server_status(True, url)
+        self._set_server_status(True, url)
         if not quiet:
             self.statusBar().showMessage(f"Server running at {url}", 5000)
 
     def stop_server(self):
         self.close_fullscreen()
         self.core.stop_server()
-        self.controls.set_server_status(False)
+        self._set_server_status(False)
 
     def reconnect_output(self):
         self.core.broadcaster.request_reload()
@@ -455,22 +779,20 @@ class MainWindow(QMainWindow):
         dlg = LibraryDialog(self.core, self, first_run=first_run)
         dlg.exec()
         if dlg.changed:
-            self.nav.reload_translations()
-            self._translations_changed()
+            self._after_library_change()
         st = self.core.library_status()
         if not (st["en_complete"] and st["fr_complete"]):
             missing = " and ".join(x for x, ok in (("English", st["en_complete"]), ("French", st["fr_complete"]))
                                    if not ok)
             self.statusBar().showMessage(f"Setup needed: no complete {missing} Bible yet — "
-                                         "open “Bible library…” on the left.")
+                                         "open the KJV / LSG button → Bible library…")
 
     def install_bundled_bibles(self):
         """Install the Bibles that come with the program (KJV, LSG) in the background."""
         entries = self.core.bundled_catalog()
 
         def done(trs):
-            self.nav.reload_translations()
-            self._translations_changed()
+            self._after_library_change()
             names = ", ".join(t.code for t in trs)
             self.statusBar().showMessage(f"Bibles installed: {names}. Type a reference such as John 3:16 to begin.",
                                          15000)

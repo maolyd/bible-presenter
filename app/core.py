@@ -40,15 +40,23 @@ class AppCore:
         port = int(self.settings.get("server_port", DEFAULT_PORT) or DEFAULT_PORT)
         self.server = PresentationServer(self.web_root, self.broadcaster, DEFAULT_HOST, port)
 
-    STYLE_VERSION = 2
+    STYLE_VERSION = 3
 
     def _migrate_style(self) -> None:
-        """Version 2 made "one verse at a time" in a footer the standard display."""
-        if (self.settings.get("style_version", 1) or 1) >= self.STYLE_VERSION:
+        """Upgrade saved appearance settings once per new default:
+        v2 made "one verse at a time" in a footer standard; v3 made EB Garamond the default font."""
+        version = self.settings.get("style_version", 1) or 1
+        if version >= self.STYLE_VERSION:
             return
         saved = self.settings.get("style")
         if saved:
-            saved.update(verses_per_slide=1, display_mode="footer")
+            if version < 2:
+                saved.update(verses_per_slide=1, display_mode="footer")
+            if saved.get("font_family", "Segoe UI") == "Segoe UI":   # the old default, never chosen by hand
+                saved["font_family"] = "EB Garamond"
+                for key in ("en_size", "fr_size"):                  # Garamond reads smaller: only old defaults
+                    if saved.get(key, 56) == 56:
+                        saved[key] = 60
             self.settings.set("style", saved)
         self.settings.set("style_version", self.STYLE_VERSION)
 

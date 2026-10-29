@@ -17,8 +17,8 @@ No internet connection is needed for this. The server only accepts connections f
 ## 2. Start Bible Presenter and the server
 
 1. Start Bible Presenter (`python main.py`, or `BiblePresenter.exe`).
-2. In the right panel, **OBS presentation server** should show **● Running**. If not, click **Start server**.
-3. Click **Copy URL**. The address is normally:
+2. At the bottom right, the OBS line should show a green dot: **● OBS · 127.0.0.1:8765/presentation**. If it is red or grey, open **Settings** → *OBS presentation server* and click **Start server**.
+3. Click **Copy** on that line. The address is normally:
 
    ```
    http://127.0.0.1:8765/presentation
@@ -56,22 +56,22 @@ Bible Presenter shows the verse in a **footer band** across the bottom of the sc
 
 In the operator preview, the black area above the band is where your camera will show.
 
-In footer mode, **Black screen** hides the band only, so the camera stays visible (it does not black out your stream).
+In footer mode, **Hide** (Ctrl+B) hides the band only, so the camera stays visible (it does not black out your stream).
 
 ### Full screen (projector, or verses only)
 
-Set *Layout → Display* to **Full screen**. The verses then fill the whole 16:9 slide on the *Background* colour. Here you can also tick **Transparent background** (in *Show / hide*) for a text-only overlay; in this mode *Black screen* shows black.
+In **Settings**, set *Layout → Display* to **Full screen**. The verses then fill the whole 16:9 slide on the *Background* colour. Here you can also tick **Transparent background** (in *Show / hide*) for a text-only overlay; in this mode *Black screen* shows black.
 
 The page always keeps a 16:9 design and scales itself, so any Browser Source size works (for example 1280×720 or a smaller box).
 
 ## 5. Test it
 
 1. In Bible Presenter type `John 3:16-18`, press **Enter**, click **GO LIVE** → John 3:16 appears in the footer in OBS, in English and French, with `(1/3)` after the reference.
-2. Press **Next live verse ▶** (Ctrl+Right) → 3:17, then 3:18.
+2. Click **GO LIVE** again (the next verse is queued automatically), or **Next ▶** on the Live card (Ctrl+Right) → 3:17, then 3:18.
 3. Type `Psalm 23`, press **Enter** → the *preview* changes, **OBS stays on John 3**. Click **GO LIVE** → OBS shows Psalm 23:1.
-4. In *Layout*, switch **Bilingual layout** between *Side by side* and *Stacked*, and **Order** between *English first* / *French first* → OBS updates immediately.
-5. Click **Black screen** (Ctrl+B) → the footer disappears (camera still visible). Click **Restore** (Ctrl+R) → the verse comes back.
-6. Use **Next live verse ▶** (Ctrl+Right) → OBS moves to the next verse.
+4. In **Settings** → *Layout*, switch **Bilingual layout** between *Side by side* and *Stacked*, and **Order** between *English first* / *French first* → OBS updates immediately.
+5. Click **Hide** (Ctrl+B) → the footer disappears (camera still visible). Click **Show** → the verse comes back.
+6. Use **Next ▶** (Ctrl+Right) → OBS moves to the next verse.
 
 ## 6. Save the OBS setup
 
@@ -82,7 +82,7 @@ OBS saves scenes automatically when you close it. To keep a backup: **Scene Coll
 The page reconnects by itself within a few seconds when the server comes back (for example after restarting Bible Presenter). If it does not:
 
 1. In Bible Presenter check the server status is **● Running** and the port matches the OBS URL.
-2. Click **Reconnect output (reload OBS page)** in the server section.
+2. Click **Reconnect output (reload OBS page)** in Settings → *OBS presentation server*.
 3. Still nothing? In OBS, double-click **Bible Output** and click **Refresh cache of current page** (or right-click the source → *Properties* → *Refresh*).
 4. Check the URL in OBS is exactly `http://127.0.0.1:PORT/presentation` (with your port).
 5. As a test, click **Open in browser** in Bible Presenter. If the browser shows the verse but OBS does not, recreate the Browser Source.
@@ -91,4 +91,4 @@ Tip: to see a small connection dot for troubleshooting, use `http://127.0.0.1:87
 
 ## Projector without OBS
 
-In *Fullscreen output*, pick the projector's screen and click **Open fullscreen**. It shows the same live slide as OBS. Press **Esc** on that screen (or double-click it, or click **Close**) to close it.
+In **Settings** → *Fullscreen output*, pick the projector's screen and click **Open fullscreen**. It shows the same live slide as OBS. Press **Esc** on that screen (or double-click it, or click **Close**) to close it.

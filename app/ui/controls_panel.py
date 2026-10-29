@@ -4,11 +4,10 @@ from __future__ import annotations
 from PySide6.QtCore import Signal
 from PySide6.QtGui import QColor, QFont, QGuiApplication
 from PySide6.QtWidgets import (QCheckBox, QColorDialog, QComboBox, QDoubleSpinBox, QFontComboBox,
-                               QFormLayout, QGridLayout, QGroupBox, QHBoxLayout, QLabel, QLineEdit,
+                               QFormLayout, QGroupBox, QHBoxLayout, QLabel, QLineEdit,
                                QPushButton, QScrollArea, QSpinBox, QVBoxLayout, QWidget)
 
 from ..core import AppCore
-from .slide_view import SlideView
 
 
 class ColorButton(QPushButton):
@@ -34,10 +33,7 @@ class ColorButton(QPushButton):
 
 
 class ControlsPanel(QWidget):
-    # live controls
-    prevLive = Signal()
-    nextLive = Signal()
-    blackToggled = Signal(bool)
+    # output (the everyday live buttons are on the main window)
     restoreLive = Signal()
     clearLive = Signal()
     # output & server
@@ -55,35 +51,15 @@ class ControlsPanel(QWidget):
         outer = QVBoxLayout(self)
         outer.setContentsMargins(4, 4, 4, 4)
 
-        # ---------------- live monitor + controls (always visible)
-        live_box = QGroupBox("On air (what OBS shows)")
-        ll = QVBoxLayout(live_box)
-        self.live_label = QLabel("Nothing is live")
-        self.live_label.setWordWrap(True)
-        self.live_label.setStyleSheet("font-weight:600;")
-        ll.addWidget(self.live_label)
-        self.live_view = SlideView()
-        self.live_view.setMinimumHeight(150)
-        ll.addWidget(self.live_view)
-        grid = QGridLayout()
-        self.btn_prev_live = QPushButton("◀ Previous live verse")
-        self.btn_next_live = QPushButton("Next live verse ▶")
-        self.btn_black = QPushButton("Black screen")
-        self.btn_black.setCheckable(True)
-        self.btn_restore = QPushButton("Restore")
+        out_live = QGroupBox("Live output")
+        ol = QHBoxLayout(out_live)
+        self.btn_restore = QPushButton("Restore last slide")
         self.btn_clear = QPushButton("Clear output")
-        self.btn_prev_live.setToolTip("Ctrl+Left: previous page or verse of the live passage")
-        self.btn_next_live.setToolTip("Ctrl+Right: next page or verse of the live passage")
-        self.btn_black.setToolTip("Ctrl+B: hide the verse (the live passage is kept)")
         self.btn_restore.setToolTip("Ctrl+R: show the last live slide again")
         self.btn_clear.setToolTip("Remove the verse from the output (Restore brings it back)")
-        grid.addWidget(self.btn_prev_live, 0, 0)
-        grid.addWidget(self.btn_next_live, 0, 1)
-        grid.addWidget(self.btn_black, 1, 0)
-        grid.addWidget(self.btn_restore, 1, 1)
-        grid.addWidget(self.btn_clear, 2, 0, 1, 2)
-        ll.addLayout(grid)
-        outer.addWidget(live_box)
+        ol.addWidget(self.btn_restore)
+        ol.addWidget(self.btn_clear)
+        outer.addWidget(out_live)
 
         # ---------------- scrollable settings
         scroll = QScrollArea()
@@ -320,9 +296,6 @@ class ControlsPanel(QWidget):
         self.ref_btn.colorChanged.connect(lambda c: sc(reference_color=c))
         self.btn_reset_style.clicked.connect(lambda: self.load_style(self.core.reset_style()))
 
-        self.btn_prev_live.clicked.connect(self.prevLive)
-        self.btn_next_live.clicked.connect(self.nextLive)
-        self.btn_black.toggled.connect(self.blackToggled)
         self.btn_restore.clicked.connect(self.restoreLive)
         self.btn_clear.clicked.connect(self.clearLive)
         self.btn_fullscreen.clicked.connect(lambda: self.openFullscreen.emit(self.screen_combo.currentData() or 0))
@@ -351,10 +324,3 @@ class ControlsPanel(QWidget):
         self.btn_copy.setEnabled(running)
         self.btn_browser.setEnabled(running)
         self.btn_reconnect.setEnabled(running)
-
-    def set_black_checked(self, black: bool):
-        self.btn_black.blockSignals(True)
-        self.btn_black.setChecked(black)
-        self.btn_black.blockSignals(False)
-        self.btn_black.setText("Black screen ON — click to show" if black else "Black screen")
-        self.btn_black.setStyleSheet("background:#111;color:#fff;font-weight:700;" if black else "")

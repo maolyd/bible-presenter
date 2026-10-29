@@ -38,23 +38,27 @@ Then double-click **Start Bible Presenter.command** in Finder to start it. The f
 
 ## Using it
 
-1. Type a reference — `John 3:16`, `Jean 3.16-18`, `1re Jean 1:9`, `Psaume 23`, `Rom 8:28-39` — and press Enter, or browse *Book → Chapter → Verse* (Shift+click for a range), or search words (`"exact phrase"` works; accents are ignored).
-2. Check the **PREVIEW** (blue frame). The *On air* monitor (top right) shows what OBS currently shows.
-3. Click **GO LIVE** (Ctrl+Enter / F5). With *one verse at a time*, a selection such as John 3:16-18 goes live verse by verse: press **Next live verse ▶** (Ctrl+Right) to move to 3:17, 3:18, then on to the following verse. The reference shows `(1/3)` while you step through a selection.
+The window has one search bar at the top, the passage (English | French) on the left, and on the right the **Next** verse preview, **GO LIVE**, the **Live** card and the OBS address.
+
+1. Type in the search bar and press Enter: a reference — `John 3:16`, `Jean 3,16-18`, `1re Jean 1:9`, `Psaume 23`, `Rom 8:28-39` — opens the passage; words (`grace`, `"so loved"`; accents are ignored) list matching verses in both languages. **Browse** opens book → chapter → verse pickers (Shift+click for a range).
+2. The verse queued next is highlighted in blue and shown in the **Next** preview. Click any verse in the table to queue it instead.
+3. Click **GO LIVE** (Ctrl+Enter / F5). The verse goes to OBS and the following verse is queued automatically, so you can keep pressing GO LIVE through a passage. On the **Live** card, **◀ Prev / Next ▶** move what is on screen and **Hide** removes it (click **Show** to bring it back).
+4. **KJV / LSG** buttons: change or hide a translation, open the Bible library. **Settings**: appearance, Restore / Clear, the fullscreen projector window and the OBS server.
 
 Keyboard shortcuts:
 
 | Keys | Action |
 |---|---|
-| Ctrl+Enter or F5 | Go live with the preview |
-| Ctrl+Right / Ctrl+Left | Next / previous live verse (or page) |
-| Alt+Right / Alt+Left | Next / previous verse in the preview |
-| Ctrl+B | Black screen on/off |
+| Ctrl+Enter or F5 | Go live with the queued (Next) verse |
+| Ctrl+Right / Ctrl+Left | Next / previous verse on screen |
+| Alt+Right / Alt+Left | Queue the next / previous verse |
+| Ctrl+B | Hide / show the verse |
 | Ctrl+R | Restore the last live slide |
-| Ctrl+L | Jump to the reference box |
-| Ctrl+F | Jump to search |
+| Ctrl+L or Ctrl+F | Jump to the search bar |
 
-Presentation options (right panel, saved automatically): display as footer (lower third, with adjustable height and background opacity) or full screen, side-by-side or stacked layout, English-first or French-first, verses per slide (one verse at a time — the default; 2–5 verses; or the whole selection with automatic page split), reference on top or bottom, show/hide reference, labels, verse numbers, English or French text, colours, font, independent English/French/reference sizes, line spacing, alignment, space between languages, transparent background for overlays.
+Presentation options (**Settings**, saved automatically): display as footer (lower third, with adjustable height and background opacity) or full screen, side-by-side or stacked layout, English-first or French-first, verses per slide (one verse at a time — the default; 2–5 verses; or the whole selection with automatic page split), reference on top or bottom, show/hide reference, labels, verse numbers, English or French text, colours, font, independent English/French/reference sizes, line spacing, alignment, space between languages, transparent background for overlays.
+
+Scripture is set in **EB Garamond** (bundled, works offline), in the app and on the OBS output; the interface uses Inter. Any installed font can be chosen in Settings.
 
 Long passages are shrunk to fit and, if they would become too small, split into pages (`(1/3)` is shown after the reference). The output never scrolls or cuts text off.
 

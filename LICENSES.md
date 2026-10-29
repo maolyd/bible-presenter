@@ -15,6 +15,13 @@
 
 The SHA-256 checksums of these files are recorded in `data/bibles/catalog.json` and verified before import.
 
+## Fonts bundled in `web/fonts/`
+
+| Font | Used for | Licence |
+|---|---|---|
+| EB Garamond (The EB Garamond Project Authors) | scripture text in the app and on the OBS output | SIL Open Font License 1.1 (`web/fonts/OFL-EBGaramond.txt`) |
+| Inter (The Inter Project Authors) | the app's interface | SIL Open Font License 1.1 (`web/fonts/OFL-Inter.txt`) |
+
 ## Software used
 
 | Component | Licence |

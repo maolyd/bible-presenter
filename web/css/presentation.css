@@ -1,9 +1,15 @@
 /* Bible presentation output — designed on a 1920x1080 canvas and scaled to fit. */
+
+/* Bundled fonts (SIL Open Font License, see web/fonts/OFL-*.txt): work offline in OBS. */
+@font-face { font-family: "EB Garamond"; src: url("../fonts/EBGaramond.ttf") format("truetype");
+             font-weight: 400 800; font-style: normal; }
+@font-face { font-family: "EB Garamond"; src: url("../fonts/EBGaramond-Italic.ttf") format("truetype");
+             font-weight: 400 800; font-style: italic; }
 :root {
   --bg: #0b1530;
   --text: #fff8ec;
   --ref: #e9c46a;
-  --font: "Segoe UI", Arial, sans-serif;
+  --font: "EB Garamond", Garamond, Georgia, serif;
   --en-size: 56px;
   --fr-size: 56px;
   --ref-size: 40px;
@@ -88,6 +94,7 @@ body.footer .grid { column-gap: 70px; }
   line-height: 1.2;
   text-align: center;
   font-weight: 600;
+  font-style: italic;
   letter-spacing: 0.01em;
 }
 .ref:empty { display: none; }

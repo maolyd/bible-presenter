@@ -15,6 +15,7 @@ from __future__ import annotations
 import errno
 import json
 import mimetypes
+mimetypes.add_type("font/ttf", ".ttf")      # some Windows registries lack it
 import os
 import socket
 import threading

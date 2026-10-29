@@ -145,20 +145,20 @@ In the **Set up your Bible library** window:
 3. The status line turns green: *Ready: a complete English and a complete French Bible are installed.*
 4. Click **Close**.
 
-KJV is selected for English and LSG for French. You can change this at any time in the **Bible translations** box (top left). To add other Bibles, see [BIBLE_DATA.md](BIBLE_DATA.md).
+KJV is selected for English and LSG for French. You can change this at any time with the **KJV** / **LSG** buttons at the top of the window. To add other Bibles, see [BIBLE_DATA.md](BIBLE_DATA.md).
 
 The library is stored in `%LOCALAPPDATA%\BiblePresenter` (for example `C:\Users\YourName\AppData\Local\BiblePresenter`), not in the project folder, so it is kept when you update or rebuild the program.
 
 ### Step 9 – Check the presentation server
 
-In the right-hand panel, scroll to **OBS presentation server**. It starts automatically and shows:
+It starts automatically. The bottom right of the window shows **● OBS · 127.0.0.1:8765/presentation** with a **Copy** button. Click **Settings** → *OBS presentation server* for details:
 
 * Status: **● Running (this computer only)**
 * OBS URL: `http://127.0.0.1:8765/presentation`
 
-If it shows an error such as *Port 8765 is already in use*, change **Port** to `8766`, click **Start server**, and use that new URL in OBS.
+If it shows an error such as *Port 8765 is already in use*, open **Settings**, change **Port** to `8766`, click **Start server**, and use that new URL in OBS.
 
-Click **Open in browser** to see the output page in your web browser (it is empty until something is live; in footer mode the page is transparent, so a browser shows it as white or black above the band).
+In Settings, **Open in browser** shows the output page in your web browser (it is empty until something is live; in footer mode the page is transparent, so a browser shows it as white or black above the band).
 
 ### Step 10 – Connect OBS
 
@@ -166,9 +166,9 @@ Follow [OBS_SETUP.md](OBS_SETUP.md).
 
 ### Step 11 – Test the first verse
 
-1. In **Go to reference** (top left), type `John 3:16` (or `Jean 3:16`) and press **Enter**.
-2. The centre shows the English and French text and a **PREVIEW** of the slide. OBS does not change yet.
-3. Click the red **GO LIVE** button. The verse appears in OBS as a footer band at the bottom of the screen, English and French side by side (and in the *On air* monitor at the top right).
+1. In the search bar at the top, type `John 3:16` (or `Jean 3:16`) and press **Enter**.
+2. The English and French text appear, and the **Next** preview on the right shows the slide. OBS does not change yet.
+3. Click the red **GO LIVE** button. The verse appears in OBS as a footer band at the bottom of the screen, English and French side by side; the **Live** card on the right shows "LIVE John 3:16".
 4. Type `Psalm 23` and press Enter. The preview changes, **OBS still shows John 3:16**. Click **GO LIVE** to send Psalm 23.
 
 ### Step 12 – Run the automated tests (optional but recommended)
@@ -236,7 +236,7 @@ The `.exe` you build is not *code-signed* (signing requires buying a certificate
 | `py` is not recognised | Python is not installed, or *Add to PATH* was not ticked. Re-run the Python installer (Step 1). Then close and reopen PowerShell. |
 | `No module named PySide6` | The packages are not installed in the virtual environment. Run Step 6 again, and start the program with `.\.venv\Scripts\python.exe main.py`. |
 | The window opens but the preview is blank/white | Update your graphics driver. As a workaround, start with `$env:QTWEBENGINE_CHROMIUM_FLAGS="--disable-gpu"; python main.py`. OBS output is not affected. |
-| *Port 8765 is already in use* | Another program (or a second copy of Bible Presenter) uses the port. Close the other copy, or pick another port in the Server section and update the OBS URL. |
+| *Port 8765 is already in use* | Another program (or a second copy of Bible Presenter) uses the port. Close the other copy, or pick another port in Settings → OBS presentation server and update the OBS URL. |
 | *Windows does not allow this program to use port …* | Windows reserves some port ranges. Pick another port, for example `8790`. |
 | OBS shows nothing | See the *Recovery* section of [OBS_SETUP.md](OBS_SETUP.md). |
 | I want to start over with an empty library and default settings | Close the program and delete the folder `%LOCALAPPDATA%\BiblePresenter`. |

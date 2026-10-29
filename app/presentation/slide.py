@@ -8,9 +8,9 @@ DEFAULT_STYLE: dict = {
     "background": "#0b1530",        # dark navy
     "text_color": "#fff8ec",        # warm white
     "reference_color": "#e9c46a",   # soft gold for the reference line
-    "font_family": "Segoe UI",
-    "en_size": 56,                  # px on the 1920x1080 design canvas
-    "fr_size": 56,
+    "font_family": "EB Garamond",   # bundled in web/fonts, a classic Bible serif
+    "en_size": 60,                  # px on the 1920x1080 design canvas
+    "fr_size": 60,
     "ref_size": 40,
     "line_spacing": 1.3,
     "align": "center",              # left | center | right | justify
@@ -75,7 +75,7 @@ def sanitize_style(style: dict) -> dict:
         if not (isinstance(v, str) and v.startswith("#") and len(v) in (4, 7)
                 and all(ch in "0123456789abcdefABCDEF" for ch in v[1:])):
             out[key] = DEFAULT_STYLE[key]
-    out["font_family"] = "".join(ch for ch in out["font_family"] if ch not in "\"';{}<>\\")[:80] or "Segoe UI"
+    out["font_family"] = "".join(ch for ch in out["font_family"] if ch not in "\"';{}<>\\")[:80] or "EB Garamond"
     return out
 
 
