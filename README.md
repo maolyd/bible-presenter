@@ -10,7 +10,7 @@ A Windows desktop program for showing Bible verses in **English and French on th
 
 | I want to… | Read |
 |---|---|
-| **Install on Windows: double-click `Install Bible Presenter.bat`** (details in the guide below) | [docs/INSTALL_WINDOWS.md](docs/INSTALL_WINDOWS.md) |
+| **Install on Windows: download `BiblePresenter-Setup-1.0.0.exe` from [Releases](https://github.com/maolyd/bible-presenter/releases/latest)** (or double-click `Install Bible Presenter.bat` from the zip) | [docs/INSTALL_WINDOWS.md](docs/INSTALL_WINDOWS.md) |
 | Install manually, run from source, build the `.exe` | [docs/INSTALL_WINDOWS.md](docs/INSTALL_WINDOWS.md) |
 | Connect OBS Studio | [docs/OBS_SETUP.md](docs/OBS_SETUP.md) |
 | Add or understand Bible translations and licences | [docs/BIBLE_DATA.md](docs/BIBLE_DATA.md), [LICENSES.md](LICENSES.md) |

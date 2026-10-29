@@ -2,7 +2,11 @@
 
 This guide assumes you have never built a Python program before. Follow the steps in order.
 
-## Easy install (recommended): double-click
+## Easiest: the Setup program
+
+Download **BiblePresenter-Setup-1.0.0.exe** from <https://github.com/maolyd/bible-presenter/releases/latest>, double-click it, and click **Next → Install → Finish**. No Python needed; it adds a Desktop icon and installs the Bibles automatically on first start. If Windows shows *“Windows protected your PC”*, click **More info → Run anyway** (the installer is not code-signed). Uninstall from *Settings → Apps*.
+
+## Alternative: double-click install from the zip
 
 1. Download `bible-presentation-app.zip`. Right-click it → **Extract All…** → **Extract**.
 2. Open the extracted `bible-presentation-app` folder and double-click **Install Bible Presenter** (`Install Bible Presenter.bat`).
@@ -221,7 +225,7 @@ The `.exe` you build is not *code-signed* (signing requires buying a certificate
 * Do not disable SmartScreen or your antivirus. If an antivirus quarantines the file (a “false positive” is common for PyInstaller programs), you can submit it to the antivirus vendor for review, or run the program with Method A instead.
 * To remove the warning entirely, a church can buy a code-signing certificate and sign `BiblePresenter.exe` with Microsoft's `signtool`; this is optional.
 
-> Note: the build configuration is provided and was checked on Linux (the same PyInstaller recipe produced a working bundle there), but the Windows `.exe` itself has **not** been built or tested by the author of this guide — please run through the [OBS test checklist](OBS_TEST_CHECKLIST.md) after your first Windows build.
+> The same build runs automatically on GitHub's Windows machines (`.github/workflows/build-windows.yml`): tests, PyInstaller build, a start-up check of the `.exe` (OBS page served, Bibles installed) and an install/uninstall check of the Setup program. Still run the [OBS test checklist](OBS_TEST_CHECKLIST.md) on your church computer before the first service.
 
 ---
 

@@ -32,7 +32,11 @@ These are the actual results of running the test suite, not expectations.
 8. Footer display: the page's `<html>` element still painted the background colour, so the area above the footer was not transparent in OBS.
 9. Footer display: the operator preview drew the band at the wrong size after the preview widget was resized (hidden before by the full-screen background). The page now rescales on every update and whenever its size changes.
 
-## Packaging check
+## Windows (GitHub Actions, windows-2022, Python 3.12)
+
+The whole suite also runs on Windows for every change (`.github/workflows/build-windows.yml`). Release **v1.0.0** was built by a run in which all tests passed on Windows, the built `BiblePresenter.exe` started, served the OBS page and installed all three Bibles on first start, and `BiblePresenter-Setup-1.0.0.exe` installed and uninstalled silently. The first Windows run found one defect: Git on Windows changed the Bible files' line endings, so they failed their checksum. Fixed with `.gitattributes`.
+
+## Packaging check (Linux)
 
 `BiblePresenter.spec` was built with PyInstaller 6.11.1 **on Linux**; the resulting bundle started from another folder, created its user data, and served the OBS page from its bundled files. The **Windows** `.exe` has not been built or tested yet — build it with `scripts/build_windows.ps1` and run the [manual OBS checklist](OBS_TEST_CHECKLIST.md).
 
