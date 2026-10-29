@@ -15,7 +15,7 @@ Download **BiblePresenter-Setup-1.0.0.exe** from <https://github.com/maolyd/bibl
    * if Python 3.10–3.13 is not installed, it downloads Python 3.12 from python.org and installs it for your user (no administrator password);
    * it copies the program to `%LOCALAPPDATA%\Programs\BiblePresenter` and downloads its components (about 200 MB);
    * it creates a **Bible Presenter** icon on the Desktop and in the Start menu.
-4. The program starts by itself and installs the KJV, Louis Segond 1910 and WEB Bibles automatically (about 15 seconds). Press Enter to close the blue window.
+4. The program starts by itself and installs the KJV and Louis Segond 1910 Bibles automatically (about 10 seconds). Press Enter to close the blue window.
 
 From then on, just double-click **Bible Presenter** on the Desktop. It works offline. You can delete the zip and the extracted folder.
 
@@ -140,8 +140,8 @@ The Bible Presenter window opens. The first time, a **Set up your Bible library*
 
 In the **Set up your Bible library** window:
 
-1. Click **Install bundled Bibles (KJV + LSG, plus WEB)**.
-2. Wait about 15 seconds. A message lists each Bible: *King James Version (KJV): 66 books, 1189 chapters, 31,102 verses*, *Louis Segond 1910 (LSG): 66 books, 1189 chapters, 31,102 verses*, and the optional *World English Bible (WEB)*.
+1. Click **Install bundled Bibles (KJV + LSG)**. (Newer versions do this automatically on first start.)
+2. Wait about 10 seconds. A message lists each Bible: *King James Version (KJV): 66 books, 1189 chapters, 31,102 verses*, *Louis Segond 1910 (LSG): 66 books, 1189 chapters, 31,102 verses*.
 3. The status line turns green: *Ready: a complete English and a complete French Bible are installed.*
 4. Click **Close**.
 

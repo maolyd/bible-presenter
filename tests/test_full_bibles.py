@@ -1,4 +1,4 @@
-"""Checks against the complete bundled WEB and LSG Bibles."""
+"""Checks against the complete bundled KJV and LSG Bibles."""
 from app.bible.books import BOOKS
 from app.bible.passage import Passage
 
@@ -9,9 +9,8 @@ def test_both_bibles_are_complete(full_core):
     assert (fr.code, fr.book_count, fr.chapter_count, fr.is_complete) == ("LSG", 66, 1189, True)
     assert en.verse_count == 31102
     assert fr.verse_count == 31102
-    web = full_core.repo.find_by_code("WEB")
-    assert (web.book_count, web.verse_count, web.is_complete) == (66, 31098, True)
-    assert full_core.library_status() == {"en_complete": True, "fr_complete": True, "count": 3}
+    assert full_core.repo.find_by_code("WEB") is None                 # no longer bundled
+    assert full_core.library_status() == {"en_complete": True, "fr_complete": True, "count": 2}
 
 
 def test_chapter_counts_match_book_table(full_core):
@@ -47,14 +46,6 @@ def _differences(full_core, en, fr):
 
 def test_kjv_and_lsg_align_verse_for_verse(full_core):
     assert _differences(full_core, full_core.english, full_core.french) == ([], [])
-
-
-def test_web_and_lsg_differences_are_only_known_variants(full_core):
-    """WEB omits a few textual-variant verses; these get a missing marker instead of shifting."""
-    only_en, only_fr = _differences(full_core, full_core.repo.find_by_code("WEB"), full_core.french)
-    assert only_en == [("ROM", 14, 24), ("ROM", 14, 25), ("ROM", 14, 26)]
-    assert only_fr == [("LUK", 17, 36), ("ACT", 8, 37), ("ACT", 15, 34), ("ACT", 24, 7),
-                       ("ROM", 16, 25), ("ROM", 16, 26), ("ROM", 16, 27)]
 
 
 def test_psalm_23_is_paired_by_verse_number(full_core):

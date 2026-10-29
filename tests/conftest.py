@@ -40,7 +40,7 @@ def range_core(mini_core):
 
 @pytest.fixture(scope="session")
 def full_core(tmp_path_factory):
-    """AppCore with the complete bundled WEB and LSG Bibles (skipped if the files are absent)."""
+    """AppCore with the complete bundled KJV and LSG Bibles (skipped if the files are absent)."""
     bundled = ROOT / "data" / "bibles"
     if not (bundled / "catalog.json").is_file():
         pytest.skip("bundled Bible files not present")

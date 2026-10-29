@@ -465,7 +465,7 @@ class MainWindow(QMainWindow):
                                          "open “Bible library…” on the left.")
 
     def install_bundled_bibles(self):
-        """Install the Bibles that come with the program (KJV, LSG, WEB) in the background."""
+        """Install the Bibles that come with the program (KJV, LSG) in the background."""
         entries = self.core.bundled_catalog()
 
         def done(trs):
@@ -480,8 +480,8 @@ class MainWindow(QMainWindow):
                                 f"The bundled Bibles could not be installed automatically:\n{exc}")
             self.open_library(first_run=True)
 
-        run_with_progress(self, "First start: installing the King James Version, Louis Segond 1910 and "
-                                "World English Bible… (about 15 seconds)",
+        run_with_progress(self, "First start: installing the King James Version and Louis Segond 1910… "
+                                "(about 10 seconds)",
                           lambda: [self.core.import_bundled(e) for e in entries], done, failed)
 
     def show_translation_info(self):

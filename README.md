@@ -4,7 +4,7 @@ A Windows desktop program for showing Bible verses in **English and French on th
 
 * **Operator window** – search, browse and preview passages. Nothing reaches the audience until you click **GO LIVE**.
 * **Presentation output** – by default a **footer (lower-third) band** at the bottom of the screen showing **one verse at a time**, English and French side by side, with the rest of the screen transparent so the camera shows through in OBS. A **full-screen** display is one click away for projectors. It is a clean 16:9 webpage (`http://127.0.0.1:8765/presentation`) with only the verses and the reference, captured by OBS. It can also be shown fullscreen on a projector.
-* Works **offline**. Comes with complete public-domain Bibles: **King James Version** (English, default), **Louis Segond 1910** (French, default) and the **World English Bible** (optional English).
+* Works **offline**. Comes with complete public-domain Bibles: **King James Version** (English, default), **Louis Segond 1910** (French).
 
 ## Start here
 

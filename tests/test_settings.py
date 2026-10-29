@@ -64,3 +64,33 @@ def test_recent_is_ordered_deduplicated_and_limited(tmp_path):
     assert labels.count("v10") == 1
     s.clear_recent()
     assert s.recent() == []
+
+
+def test_retired_bundled_bible_is_removed_but_user_imports_are_kept(tmp_path, fixtures):
+    """WEB was bundled in 1.0.0; later versions remove that copy at start-up, but not a WEB the user imported."""
+    import json
+    import shutil
+    from app.bible.importers import read_bible_file
+    bundled = tmp_path / "bundled"
+    bundled.mkdir()
+    shutil.copy(fixtures / "mini_en.usfx.xml", bundled / "eng-web.usfx.xml")
+    (bundled / "catalog.json").write_text(json.dumps({"bibles": [], "retired": [
+        {"code": "WEB", "file": "eng-web.usfx.xml"}]}), encoding="utf-8")
+    core = AppCore(data_dir=tmp_path / "d1", bundled_dir=tmp_path / "none")   # an old version installs WEB
+    core.import_bible(read_bible_file(bundled / "eng-web.usfx.xml"), name="World English Bible", code="WEB",
+                      language="en")
+    core.set_translations(core.repo.find_by_code("WEB").id, None)
+    core.close()
+    core = AppCore(data_dir=tmp_path / "d1", bundled_dir=bundled)          # the new version starts
+    assert core.repo.find_by_code("WEB") is None
+    assert core.english is None                                           # selection falls back cleanly
+    core.close()
+
+    own = tmp_path / "my-web.xml"                                          # a WEB the user imported themselves
+    shutil.copy(fixtures / "mini_en.usfx.xml", own)
+    core = AppCore(data_dir=tmp_path / "d2", bundled_dir=bundled)
+    core.import_bible(read_bible_file(own), name="My WEB", code="WEB", language="en")
+    core.close()
+    core = AppCore(data_dir=tmp_path / "d2", bundled_dir=bundled)
+    assert core.repo.find_by_code("WEB").name == "My WEB"
+    core.close()

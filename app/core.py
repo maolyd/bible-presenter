@@ -29,6 +29,7 @@ class AppCore:
         self.settings = SettingsStore(self.data_dir / "settings.sqlite")
         self.repo = BibleRepository(self.data_dir / "bibles.sqlite")
         self.service = PassageService(self.repo)
+        self._remove_retired_bundled()
         self.broadcaster = Broadcaster()
         self._migrate_style()
         style = dict(DEFAULT_STYLE)
@@ -102,6 +103,20 @@ class AppCore:
             return []
         entries = json.loads(catalog.read_text(encoding="utf-8")).get("bibles", [])
         return [e for e in entries if (self.bundled_dir / e["file"]).is_file()]
+
+    def _remove_retired_bundled(self) -> None:
+        """Remove Bibles an earlier version installed from its bundle but no longer ships (e.g. WEB).
+
+        Only copies installed from that bundled file are removed; the same translation imported
+        by the user from another file is kept."""
+        catalog = self.bundled_dir / "catalog.json"
+        if not catalog.is_file():
+            return
+        retired = json.loads(catalog.read_text(encoding="utf-8")).get("retired", [])
+        for item in retired:
+            tr = self.repo.find_by_code(item["code"])
+            if tr and tr.source_file == item["file"]:
+                self.repo.delete_translation(tr.id)
 
     def import_bundled(self, entry: dict, replace: bool = False) -> Translation:
         path = self.bundled_dir / entry["file"]

@@ -13,11 +13,6 @@
 * Status: **Public domain**.
 * File source: <https://github.com/Beblia/Holy-Bible-XML-Format> (`FrenchBible.xml`). The publisher of the file states: “Use at your own discretion, no need to ask for permission, no warranty’s.”
 
-### World English Bible (WEB) — `eng-web.usfx.xml`
-* Text: World English Bible, by eBible.org (<https://ebible.org/web/>).
-* Status: **Public domain**. “World English Bible” is a trademark of eBible.org; the name may be used for faithful copies of the text.
-* File source: <https://github.com/seven1m/open-bibles> (`eng-web.usfx.xml`).
-
 The SHA-256 checksums of these files are recorded in `data/bibles/catalog.json` and verified before import.
 
 ## Software used

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- SAMPLE ONLY: a few verses of the King James Version (public domain outside the UK). Not a complete Bible. -->
+<osis xmlns="http://www.bibletechnologies.net/2003/OSIS/namespace">
+<osisText osisIDWork="KJVSAMPLE" xml:lang="en">
+<header><work osisWork="KJVSAMPLE"><title>KJV sample (not a complete Bible)</title><language>en</language></work></header>
+<div type="book" osisID="Ps">
+<chapter osisID="Ps.23">
+<verse osisID="Ps.23.1">The LORD is my shepherd; I shall not want.</verse>
+<verse osisID="Ps.23.2">He maketh me to lie down in green pastures: he leadeth me beside the still waters.</verse>
+</chapter></div>
+<div type="book" osisID="John">
+<chapter osisID="John.3">
+<verse osisID="John.3.16">For God so loved the world, that he gave his only begotten Son, that whosoever believeth in him should not perish, but have everlasting life.</verse>
+<verse osisID="John.3.17">For God sent not his Son into the world to condemn the world; but that the world through him might be saved.</verse>
+</chapter></div>
+</osisText></osis>

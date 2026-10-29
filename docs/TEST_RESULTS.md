@@ -9,7 +9,7 @@ These are the actual results of running the test suite, not expectations.
 
 | Test file | What it covers | Result |
 |---|---|---|
-| `tests/test_full_bibles.py` | Complete bundled KJV/LSG/WEB: counts, chapter counts, known verses, KJV-LSG exact alignment, WEB variants, search, navigation, pagination | 9/9 passed |
+| `tests/test_full_bibles.py` | Complete bundled KJV/LSG: counts, chapter counts, known verses, KJV-LSG exact alignment, search, navigation, pagination | 9/9 passed |
 | `tests/test_importers.py` | Import formats (USFX, OSIS, Zefania, Beblia, VPL, zip); validation; damaged/unknown files; no external XML entities | 11/11 passed |
 | `tests/test_passage.py` | Resolving ranges/chapters; validation messages; previous/next verse & chapter across books; missing-verse alignment | 10/10 passed |
 | `tests/test_presentation.py` | Preview/live separation; black screen & restore; clear; live paging; one-verse-at-a-time; style persistence & validation; hidden language; default one verse at a time in a footer | 14/14 passed |

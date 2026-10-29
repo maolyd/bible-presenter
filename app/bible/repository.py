@@ -138,7 +138,7 @@ class BibleRepository:
         """
         code = code.strip()
         if not code or not name.strip():
-            raise ValueError("The translation needs a name and a short code (e.g. WEB, LSG).")
+            raise ValueError("The translation needs a name and a short code (e.g. KJV, LSG).")
         if language not in ("en", "fr") and len(language) != 2:
             raise ValueError("Language must be a two-letter code such as “en” or “fr”.")
         with self._lock:

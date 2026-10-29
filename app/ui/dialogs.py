@@ -20,8 +20,7 @@ SETUP_TEXT = """
 <b>complete French Bible</b> in its library. Nothing is shown to the audience until then.</p>
 <p><b>Easiest option:</b> click <i>Install bundled Bibles</i>. This adds the
 <b>King James Version (KJV)</b> and the <b>Louis Segond 1910 (LSG)</b>, which came with this program,
-plus the <b>World English Bible (WEB)</b> as an optional modern English alternative. KJV is selected for
-English and LSG for French. It takes about 15 seconds and works offline.</p>
+KJV is selected for English and LSG for French. It takes about 10 seconds and works offline.</p>
 <p><b>Other translations:</b> click <i>Import Bible file…</i> to add a Bible file you are allowed to use
 (USFX, OSIS, Zefania XML, Beblia XML, or eBible.org VPL text). See <i>docs/BIBLE_DATA.md</i>.
 Many modern translations are copyrighted; only import them if you have permission.</p>
@@ -57,7 +56,7 @@ class LibraryDialog(QDialog):
         layout.addWidget(self.table, 1)
 
         buttons = QHBoxLayout()
-        self.btn_bundled = QPushButton("Install bundled Bibles (KJV + LSG, plus WEB)")
+        self.btn_bundled = QPushButton("Install bundled Bibles (KJV + LSG)")
         self.btn_bundled.setStyleSheet("font-weight:600;")
         self.btn_import = QPushButton("Import Bible file…")
         self.btn_info = QPushButton("Information")
@@ -116,7 +115,7 @@ class LibraryDialog(QDialog):
         todo = [e for e in entries if e["code"].upper() not in installed]
         if not todo:
             QMessageBox.information(self, "Already installed",
-                                    "The bundled Bibles (KJV, LSG and WEB) are already in your library.")
+                                    "The bundled Bibles (KJV and LSG) are already in your library.")
             return
 
         def work():
@@ -129,7 +128,7 @@ class LibraryDialog(QDialog):
                 f"✔ {t.name} ({t.code}): {t.book_count} books, {t.chapter_count} chapters, "
                 f"{t.verse_count:,} verses" for t in trs))
 
-        run_with_progress(self, "Installing the bundled Bibles… (about 15 seconds)", work, done,
+        run_with_progress(self, "Installing the bundled Bibles… (about 10 seconds)", work, done,
                           lambda exc: QMessageBox.critical(self, "Installation failed",
                                                            f"{exc}\n\nYour existing Bible library was not changed."))
 
@@ -254,7 +253,7 @@ class ImportReviewDialog(QDialog):
         self.license = QLineEdit(bible.license_text)
         self.license.setPlaceholderText("e.g. Public Domain, or the permission you have")
         form.addRow("Translation name:", self.name)
-        form.addRow("Short code (e.g. WEB, LSG):", self.code)
+        form.addRow("Short code (e.g. KJV, LSG):", self.code)
         form.addRow("Language:", self.language)
         form.addRow("Licence / permission:", self.license)
         layout.addLayout(form)
