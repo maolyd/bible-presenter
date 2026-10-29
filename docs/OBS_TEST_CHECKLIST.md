@@ -18,7 +18,7 @@ Tick each box. Write down anything that fails.
 - [ ] Click **GO LIVE** → OBS shows John 3:16 in English and French in a **footer band** at the bottom, reference below the text, nothing else (no buttons, menus, scrollbars). The camera is visible above the band.
 - [ ] Type `Jean 3:16-18` → preview changes; OBS still shows 3:16 only.
 - [ ] **GO LIVE** → OBS shows Jean 3:16 with `(1/3)`; **Next live verse ▶** shows 3:17 then 3:18, one verse at a time.
-- [ ] *On air* monitor (top right) matches OBS.
+- [ ] *Live controls* (top right) shows "● LIVE:" with the same verse OBS shows.
 - [ ] Browse: click *Psalms → 23 → verse 1*, then Shift+click verse 6 → the centre text shows Psalm 23:1–6; the preview shows verse 1 with *Preview page 1 of 6*.
 - [ ] Search tab: search `berger` in French → results; click one → preview.
 - [ ] Favourites: click ☆ *Add to favourites*; it appears in the Favourites tab; clicking it selects the passage.
@@ -58,5 +58,4 @@ Tick each box. Write down anything that fails.
 - [ ] Close Bible Presenter completely and restart it → OBS reconnects by itself.
 - [ ] **Reconnect output (reload OBS page)** → OBS page reloads and shows the current state.
 - [ ] Disconnect the internet (Wi-Fi off) → everything above still works.
-- [ ] *Fullscreen output* → **Open fullscreen** on the projector screen; Esc closes it.
 - [ ] Save the OBS scene collection (Scene Collection → Export).

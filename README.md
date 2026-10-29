@@ -3,7 +3,7 @@
 A Windows desktop program for showing Bible verses in **English and French on the same slide** during services, presentations and livestreams, with **OBS Studio Browser Source** output.
 
 * **Operator window** – search, browse and preview passages. Nothing reaches the audience until you click **GO LIVE**.
-* **Presentation output** – by default a **footer (lower-third) band** at the bottom of the screen showing **one verse at a time**, English and French side by side, with the rest of the screen transparent so the camera shows through in OBS. A **full-screen** display is one click away for projectors. It is a clean 16:9 webpage (`http://127.0.0.1:8765/presentation`) with only the verses and the reference, captured by OBS. It can also be shown fullscreen on a projector.
+* **Presentation output** – by default a **footer (lower-third) band** at the bottom of the screen showing **one verse at a time**, English and French side by side, with the rest of the screen transparent so the camera shows through in OBS. A **full-screen** slide style is one click away. It is a clean 16:9 webpage (`http://127.0.0.1:8765/presentation`) with only the verses and the reference, which you add to your OBS scene as a **Browser Source**. Bible Presenter is only the control app: you watch and stream the result in OBS.
 * Works **offline**. Comes with complete public-domain Bibles: **King James Version** (English, default), **Louis Segond 1910** (French).
 
 ## Start here
@@ -39,7 +39,7 @@ Then double-click **Start Bible Presenter.command** in Finder to start it. The f
 ## Using it
 
 1. Type a reference — `John 3:16`, `Jean 3.16-18`, `1re Jean 1:9`, `Psaume 23`, `Rom 8:28-39` — and press Enter, or browse *Book → Chapter → Verse* (Shift+click for a range), or search words (`"exact phrase"` works; accents are ignored).
-2. Check the **PREVIEW** (blue frame). The *On air* monitor (top right) shows what OBS currently shows.
+2. Check the **PREVIEW** (blue frame) of the next verse. The *Live controls* line (top right) names the verse OBS is showing.
 3. Click **GO LIVE** (Ctrl+Enter / F5). With *one verse at a time*, a selection such as John 3:16-18 goes live verse by verse: press **Next live verse ▶** (Ctrl+Right) to move to 3:17, 3:18, then on to the following verse. The reference shows `(1/3)` while you step through a selection.
 
 Keyboard shortcuts:

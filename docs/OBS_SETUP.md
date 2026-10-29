@@ -4,7 +4,7 @@ Bible Presenter serves a clean presentation webpage on this computer. OBS Studio
 
 ```
  Bible Presenter (operator window)  --->  local server 127.0.0.1:8765  --->  OBS Browser Source "Bible Output"
-   search / preview / GO LIVE              /presentation (verses only)         livestream / projector
+   search / preview / GO LIVE              /presentation (verses only)         livestream
 ```
 
 No internet connection is needed for this. The server only accepts connections from this computer.
@@ -58,7 +58,7 @@ In the operator preview, the black area above the band is where your camera will
 
 In footer mode, **Black screen** hides the band only, so the camera stays visible (it does not black out your stream).
 
-### Full screen (projector, or verses only)
+### Full-screen slide (verses only)
 
 Set *Layout → Display* to **Full screen**. The verses then fill the whole 16:9 slide on the *Background* colour. Here you can also tick **Transparent background** (in *Show / hide*) for a text-only overlay; in this mode *Black screen* shows black.
 
@@ -88,7 +88,3 @@ The page reconnects by itself within a few seconds when the server comes back (f
 5. As a test, click **Open in browser** in Bible Presenter. If the browser shows the verse but OBS does not, recreate the Browser Source.
 
 Tip: to see a small connection dot for troubleshooting, use `http://127.0.0.1:8765/presentation?debug=1` (green = connected, red = reconnecting). Do not use `?debug=1` during a live service.
-
-## Projector without OBS
-
-In *Fullscreen output*, pick the projector's screen and click **Open fullscreen**. It shows the same live slide as OBS. Press **Esc** on that screen (or double-click it, or click **Close**) to close it.

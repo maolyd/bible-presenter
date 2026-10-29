@@ -168,7 +168,7 @@ Follow [OBS_SETUP.md](OBS_SETUP.md).
 
 1. In **Go to reference** (top left), type `John 3:16` (or `Jean 3:16`) and press **Enter**.
 2. The centre shows the English and French text and a **PREVIEW** of the slide. OBS does not change yet.
-3. Click the red **GO LIVE** button. The verse appears in OBS as a footer band at the bottom of the screen, English and French side by side (and in the *On air* monitor at the top right).
+3. Click the red **GO LIVE** button. The verse appears in OBS as a footer band at the bottom of the screen, English and French side by side; the top right of Bible Presenter shows "● LIVE: John 3:16".
 4. Type `Psalm 23` and press Enter. The preview changes, **OBS still shows John 3:16**. Click **GO LIVE** to send Psalm 23.
 
 ### Step 12 – Run the automated tests (optional but recommended)
