@@ -1,0 +1,10 @@
+# Bible source files are checked against SHA-256 checksums (data/bibles/catalog.json):
+# Git must never change their line endings.
+data/bibles/** -text
+data/sample/** -text
+tests/fixtures/** -text
+# Windows scripts need CRLF, macOS/Unix scripts need LF, wherever the repository is checked out.
+*.bat text eol=crlf
+*.ps1 text eol=crlf
+*.command text eol=lf
+*.sh text eol=lf

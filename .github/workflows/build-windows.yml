@@ -75,7 +75,19 @@ jobs:
             } catch { }
             if ($p.HasExited) { break }
           }
+          # On first start the program installs its bundled Bibles by itself: wait for all of them.
+          $db = Join-Path $env:BIBLE_PRESENTER_HOME "bibles.sqlite"
+          $bibles = "0"
+          for ($i = 0; $i -lt 45 -and $ok -and -not $p.HasExited; $i++) {
+            if (Test-Path $db) {
+              $bibles = python -c "import sqlite3,sys; c=sqlite3.connect(sys.argv[1]); print(c.execute('select count(*) from translations where is_complete=1').fetchone()[0])" $db 2>$null
+              if ($bibles -eq "3") { break }
+            }
+            Start-Sleep -Seconds 2
+          }
+          Write-Host "Complete Bibles installed on first start: $bibles"
           if (-not $p.HasExited) { Stop-Process -Id $p.Id -Force }
+          if ($ok -and $bibles -ne "3") { $ok = $false }
           $log = Join-Path $env:BIBLE_PRESENTER_HOME "bible-presenter.log"
           $tail = if (Test-Path $log) { (Get-Content $log -Tail 60) -join "`n" } else { "(no log file)" }
           Write-Host $tail
