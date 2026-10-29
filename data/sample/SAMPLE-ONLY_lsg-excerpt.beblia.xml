@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- TEST DATA ONLY: a few verses of Louis Segond 1910 (public domain). Not a complete Bible. -->
+<bible translation="French (Louis Segond 1910) TEST SAMPLE" status="Public Domain">
+  <testament name="Old">
+    <book number="1">
+      <chapter number="1">
+        <verse number="1">Au commencement, Dieu créa les cieux et la terre.</verse>
+        <verse number="2">La terre était informe et vide.</verse>
+        <verse number="3">Dieu dit: Que la lumière soit! Et la lumière fut.</verse>
+      </chapter>
+      <chapter number="2">
+        <verse number="1">Ainsi furent achevés les cieux et la terre, et toute leur armée.</verse>
+      </chapter>
+    </book>
+  </testament>
+  <testament name="New">
+    <book number="43">
+      <chapter number="3">
+        <verse number="16">Car Dieu a tant aimé le monde qu'il a donné son Fils unique, afin que quiconque croit en lui ne périsse point, mais qu'il ait la vie éternelle.</verse>
+        <verse number="17">Dieu, en effet, n'a pas envoyé son Fils dans le monde pour qu'il juge le monde.</verse>
+        <verse number="18">Celui qui croit en lui n'est point jugé.</verse>
+      </chapter>
+      <chapter number="4">
+        <verse number="1">Le Seigneur sut que les pharisiens avaient appris qu'il faisait et baptisait plus de disciples que Jean.</verse>
+      </chapter>
+    </book>
+    <book number="44">
+      <chapter number="8">
+        <verse number="36">Comme ils continuaient leur chemin, ils rencontrèrent de l'eau.</verse>
+        <verse number="37">Philippe dit: Si tu crois de tout ton coeur, cela est possible.</verse>
+        <verse number="38">Il fit arrêter le char.</verse>
+      </chapter>
+    </book>
+    <book number="65">
+      <chapter number="1">
+        <verse number="1">Jude, serviteur de Jésus-Christ, et frère de Jacques.</verse>
+        <verse number="2">que la miséricorde, la paix et la charité vous soient multipliées!</verse>
+        <verse number="3">Bien-aimés, comme je désirais vivement vous écrire.</verse>
+      </chapter>
+    </book>
+  </testament>
+</bible>

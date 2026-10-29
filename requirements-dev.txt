@@ -1,0 +1,7 @@
+# For running the automated tests and building the Windows .exe
+-r requirements.txt
+pytest==8.3.4
+pyinstaller==6.11.1
+# Optional: real-browser rendering tests (tests/test_web_render.py).
+# After installing, also run:  python -m playwright install chromium
+playwright==1.48.0

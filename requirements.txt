@@ -1,0 +1,2 @@
+# Runtime dependency (the only one: everything else is the Python standard library).
+PySide6==6.8.1

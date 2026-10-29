@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- TEST DATA ONLY (WEB excerpt, public domain). -->
+<osis xmlns="http://www.bibletechnologies.net/2003/OSIS/namespace">
+<osisText osisIDWork="TESTOSIS" xml:lang="en">
+<header><work osisWork="TESTOSIS"><title>Test OSIS Bible</title><language>en</language></work></header>
+<div type="book" osisID="John"><title>John</title>
+<chapter osisID="John.3">
+<verse osisID="John.3.16" sID="John.3.16"/>For God so loved the world.<note>a note to ignore</note><verse eID="John.3.16"/>
+<verse osisID="John.3.17">For God didn’t send his Son into the world to judge the world.</verse>
+</chapter></div>
+</osisText></osis>

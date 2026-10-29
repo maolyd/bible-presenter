@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- TEST DATA ONLY (LSG excerpt, public domain). -->
+<XMLBIBLE biblename="Test Zefania" type="x-bible">
+<INFORMATION><title>Test Zefania Bible</title><identifier>TESTZEF</identifier><language>FRE</language><rights>Public Domain</rights></INFORMATION>
+<BIBLEBOOK bnumber="43" bname="Jean"><CHAPTER cnumber="3">
+<VERS vnumber="16">Car Dieu a tant aimé le monde<NOTE>note à ignorer</NOTE> qu'il a donné son Fils unique.</VERS>
+<VERS vnumber="17">Dieu, en effet, n'a pas envoyé son Fils dans le monde pour qu'il juge le monde.</VERS>
+</CHAPTER></BIBLEBOOK>
+</XMLBIBLE>

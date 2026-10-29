@@ -1,0 +1,157 @@
+/* Bible presentation output — designed on a 1920x1080 canvas and scaled to fit. */
+:root {
+  --bg: #0b1530;
+  --text: #fff8ec;
+  --ref: #e9c46a;
+  --font: "Segoe UI", Arial, sans-serif;
+  --en-size: 56px;
+  --fr-size: 56px;
+  --ref-size: 40px;
+  --line: 1.3;
+  --gap: 48px;
+  --fit: 1;
+  --align: center;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  cursor: none;
+}
+html { background: transparent; }   /* the body paints the background, so footer mode can be see-through */
+body { background: var(--bg); }
+body.transparent, body.transparent #viewport { background: transparent; }
+
+#viewport {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+#stage {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1920px;
+  height: 1080px;
+  transform-origin: 0 0;
+  color: var(--text);
+  font-family: var(--font);
+  overflow: hidden;
+}
+
+#slide {
+  position: absolute;
+  inset: 0;
+  padding: 80px 110px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  transition: opacity 180ms ease-in-out;
+}
+#slide.hidden { opacity: 0; }
+
+body.black, body.black #viewport { background: #000; }
+body.black.transparent, body.black.transparent #viewport { background: transparent; }
+
+/* ---------- footer (lower third): a band at the bottom, the rest transparent ---------- */
+body.footer, body.footer #viewport,
+body.footer.black, body.footer.black #viewport { background: transparent; }
+body.footer #slide {
+  top: auto;
+  height: var(--footer-h);
+  padding: 20px 80px 24px;
+  background: var(--band);
+  border-top: 4px solid var(--ref);
+}
+body.footer .ref-top { margin-bottom: 10px; }
+body.footer .ref-bottom { margin-top: 10px; }
+body.footer .grid { column-gap: 70px; }
+
+.content {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  align-items: center;      /* vertically centre the verses */
+}
+.content-inner { width: 100%; }
+
+.ref {
+  flex: 0 0 auto;
+  color: var(--ref);
+  font-size: calc(var(--ref-size) * var(--fit-ref, 1));
+  line-height: 1.2;
+  text-align: center;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+.ref:empty { display: none; }
+.ref-top { margin-bottom: 36px; }
+.ref-bottom { margin-top: 36px; }
+
+/* ---------- side-by-side: one grid row per verse keeps EN/FR aligned ---------- */
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: 90px;
+  row-gap: calc(18px * var(--fit));
+  text-align: var(--align);
+}
+.grid.single { grid-template-columns: 1fr; }
+.grid .label { padding-bottom: 10px; }
+
+.verse {
+  line-height: var(--line);
+  overflow-wrap: break-word;
+}
+.lang-en { font-size: calc(var(--en-size) * var(--fit)); }
+.lang-fr { font-size: calc(var(--fr-size) * var(--fit)); }
+
+.num {
+  font-size: 0.55em;
+  vertical-align: super;
+  line-height: 0;
+  opacity: 0.75;
+  margin-right: 0.25em;
+  font-weight: 600;
+}
+.missing { font-style: italic; opacity: 0.6; font-size: 0.8em; }
+
+.label {
+  font-size: calc(28px * var(--fit));
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  opacity: 0.7;
+  font-weight: 600;
+}
+
+/* ---------- stacked: each language is one flowing block ---------- */
+.stack { text-align: var(--align); }
+.stack .block + .block { margin-top: calc(var(--gap) * var(--fit)); }
+.stack .block + .block::before {          /* thin divider in the text colour */
+  content: "";
+  display: block;
+  height: 2px;
+  background: currentColor;
+  opacity: 0.22;
+  margin: 0 auto calc(var(--gap) * var(--fit));
+  width: 60%;
+}
+.stack .block .label { margin-bottom: 12px; }
+.stack .block p { margin: 0; line-height: var(--line); }
+
+#status-dot {
+  position: fixed;
+  right: 8px;
+  bottom: 8px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #c33;
+}
+#status-dot.ok { background: #3c3; }

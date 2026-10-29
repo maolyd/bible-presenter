@@ -1,0 +1,5 @@
+GEN 1:1 In the beginning, God created the heavens and the earth.
+GEN 1:2 The earth was formless and empty.
+JHN 3:16 For God so loved the world.
+JHN 3:16 duplicate line for testing.
+XYZ 1:1 unknown book code.
