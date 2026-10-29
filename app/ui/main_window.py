@@ -12,6 +12,7 @@ from ..server.presentation_server import ServerStartError
 from .controls_panel import ControlsPanel
 from .dialogs import LibraryDialog, TranslationInfoDialog, _esc
 from .nav_panel import NavPanel
+from .output_window import OutputWindow
 from .slide_view import SlideView
 from .workers import run_with_progress
 
@@ -39,6 +40,7 @@ class MainWindow(QMainWindow):
         self.core = core
         self.selected: Passage | None = None
         self.preview_page = 0
+        self.output_window: OutputWindow | None = None
         self.setWindowTitle("Bible Presenter — English / Français")
         self.setStyleSheet(APP_STYLE)
 
@@ -169,6 +171,8 @@ class MainWindow(QMainWindow):
         c.blackToggled.connect(self.core.controller.set_black)
         c.restoreLive.connect(self.restore_live)
         c.clearLive.connect(self.core.controller.clear)
+        c.openFullscreen.connect(self.open_fullscreen)
+        c.closeFullscreen.connect(self.close_fullscreen)
         c.startServer.connect(self.start_server)
         c.stopServer.connect(self.stop_server)
         c.reconnectOutput.connect(self.reconnect_output)
@@ -219,6 +223,7 @@ class MainWindow(QMainWindow):
     def closeEvent(self, event):
         self.core.settings.set("window_geometry", bytes(self.saveGeometry().toBase64()).decode())
         self.core.settings.set("splitter_state", bytes(self.splitter.saveState().toBase64()).decode())
+        self.close_fullscreen()
         self.core.close()
         super().closeEvent(event)
 
@@ -404,6 +409,7 @@ class MainWindow(QMainWindow):
         self.live_tag.style().unpolish(self.live_tag)
         self.live_tag.style().polish(self.live_tag)
         self.controls.set_black_checked(mode == "black")
+        self.controls.live_view.render(payload)
 
     # ================================================================ server & output
     def start_server(self, port: int, quiet: bool = False):
@@ -420,12 +426,29 @@ class MainWindow(QMainWindow):
             self.statusBar().showMessage(f"Server running at {url}", 5000)
 
     def stop_server(self):
+        self.close_fullscreen()
         self.core.stop_server()
         self.controls.set_server_status(False)
 
     def reconnect_output(self):
         self.core.broadcaster.request_reload()
+        if self.output_window and hasattr(self.output_window, "view"):
+            self.output_window.view.reload()
         self.statusBar().showMessage("Asked the output page(s) to reload.", 4000)
+
+    def open_fullscreen(self, screen_index: int):
+        if not self.core.server.running:
+            self.start_server(self.core.server.port)
+            if not self.core.server.running:
+                return
+        self.close_fullscreen()
+        self.output_window = OutputWindow(self.core.server.url)
+        self.output_window.show_on_screen(screen_index)
+
+    def close_fullscreen(self):
+        if self.output_window:
+            self.output_window.close()
+            self.output_window = None
 
     # ================================================================ library
     def open_library(self, first_run: bool = False):

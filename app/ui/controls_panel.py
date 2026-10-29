@@ -8,6 +8,7 @@ from PySide6.QtWidgets import (QCheckBox, QColorDialog, QComboBox, QDoubleSpinBo
                                QPushButton, QScrollArea, QSpinBox, QVBoxLayout, QWidget)
 
 from ..core import AppCore
+from .slide_view import SlideView
 
 
 class ColorButton(QPushButton):
@@ -40,6 +41,8 @@ class ControlsPanel(QWidget):
     restoreLive = Signal()
     clearLive = Signal()
     # output & server
+    openFullscreen = Signal(int)      # screen index
+    closeFullscreen = Signal()
     startServer = Signal(int)         # port
     stopServer = Signal()
     reconnectOutput = Signal()
@@ -52,13 +55,16 @@ class ControlsPanel(QWidget):
         outer = QVBoxLayout(self)
         outer.setContentsMargins(4, 4, 4, 4)
 
-        # ---------------- live controls (always visible). OBS itself shows the live picture.
-        live_box = QGroupBox("Live controls")
+        # ---------------- live monitor + controls (always visible)
+        live_box = QGroupBox("On air (what OBS shows)")
         ll = QVBoxLayout(live_box)
         self.live_label = QLabel("Nothing is live")
         self.live_label.setWordWrap(True)
         self.live_label.setStyleSheet("font-weight:600;")
         ll.addWidget(self.live_label)
+        self.live_view = SlideView()
+        self.live_view.setMinimumHeight(150)
+        ll.addWidget(self.live_view)
         grid = QGridLayout()
         self.btn_prev_live = QPushButton("◀ Previous live verse")
         self.btn_next_live = QPushButton("Next live verse ▶")
@@ -176,6 +182,19 @@ class ControlsPanel(QWidget):
         cf.addRow(self.btn_reset_style)
         bl.addWidget(col_box)
 
+        # Output window
+        out_box = QGroupBox("Fullscreen output (projector / second screen)")
+        of = QFormLayout(out_box)
+        self.screen_combo = QComboBox()
+        self.refresh_screens()
+        row = QHBoxLayout()
+        self.btn_fullscreen = QPushButton("Open fullscreen")
+        self.btn_close_fullscreen = QPushButton("Close")
+        row.addWidget(self.btn_fullscreen)
+        row.addWidget(self.btn_close_fullscreen)
+        of.addRow("Screen:", self.screen_combo)
+        of.addRow(row)
+        bl.addWidget(out_box)
 
         # Server
         srv_box = QGroupBox("OBS presentation server")
@@ -217,6 +236,14 @@ class ControlsPanel(QWidget):
         s.setRange(lo, hi)
         s.setSuffix(" px")
         return s
+
+    def refresh_screens(self):
+        self.screen_combo.clear()
+        for i, screen in enumerate(QGuiApplication.screens()):
+            g = screen.geometry()
+            self.screen_combo.addItem(f"{i + 1}: {screen.name()} ({g.width()}×{g.height()})", i)
+        if self.screen_combo.count() > 1:
+            self.screen_combo.setCurrentIndex(1)     # default to the second screen (projector)
 
     # ------------------------------------------------------------ style <-> widgets
     def load_style(self, st: dict):
@@ -298,6 +325,8 @@ class ControlsPanel(QWidget):
         self.btn_black.toggled.connect(self.blackToggled)
         self.btn_restore.clicked.connect(self.restoreLive)
         self.btn_clear.clicked.connect(self.clearLive)
+        self.btn_fullscreen.clicked.connect(lambda: self.openFullscreen.emit(self.screen_combo.currentData() or 0))
+        self.btn_close_fullscreen.clicked.connect(self.closeFullscreen)
         self.btn_start.clicked.connect(lambda: self.startServer.emit(self.port.value()))
         self.btn_stop.clicked.connect(self.stopServer)
         self.btn_copy.clicked.connect(lambda: QGuiApplication.clipboard().setText(self.url_edit.text()))
