@@ -10,6 +10,11 @@ on:
     branches: [main]
     tags: ["v*"]
   workflow_dispatch:
+    inputs:
+      release_version:
+        description: "Publish a release with this version (e.g. 1.0.0). Leave empty to only build."
+        required: false
+        default: ""
 
 permissions:
   contents: write          # needed to publish a release for v* tags
@@ -28,7 +33,9 @@ jobs:
       - name: Work out the version number
         shell: pwsh
         run: |
-          if ($env:GITHUB_REF_TYPE -eq "tag") { $v = $env:GITHUB_REF_NAME.TrimStart("v") }
+          $requested = "${{ github.event.inputs.release_version }}".Trim().TrimStart("v")
+          if ($requested) { $v = $requested; "PUBLISH=true" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8 }
+          elseif ($env:GITHUB_REF_TYPE -eq "tag") { $v = $env:GITHUB_REF_NAME.TrimStart("v"); "PUBLISH=true" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8 }
           else { $v = "1.0.$env:GITHUB_RUN_NUMBER" }
           "APP_VERSION=$v" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
           Write-Host "Version $v"
@@ -134,10 +141,13 @@ jobs:
         if: steps.tests.outcome == 'failure'
         run: exit 1
 
-      - name: Publish a release (tags only)
-        if: github.ref_type == 'tag' && steps.tests.outcome == 'success'
+      - name: Publish a release
+        if: env.PUBLISH == 'true' && steps.tests.outcome == 'success'
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: v${{ env.APP_VERSION }}
+          target_commitish: ${{ github.sha }}
+          name: Bible Presenter ${{ env.APP_VERSION }}
           files: dist/BiblePresenter-Setup-*.exe
           body: |
             Download **BiblePresenter-Setup-${{ env.APP_VERSION }}.exe** below, double-click it and follow the steps.
